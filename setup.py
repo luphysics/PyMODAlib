@@ -1,4 +1,4 @@
-#  PyMODA-lib, a Python implementation of the algorithms from MODA (Multiscale Oscillatory Dynamics Analysis).
+#  PyMODAlib, a Python implementation of the algorithms from MODA (Multiscale Oscillatory Dynamics Analysis).
 #  Copyright (C) 2020 Lancaster University
 #
 #  This program is free software: you can redistribute it and/or modify
