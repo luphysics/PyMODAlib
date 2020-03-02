@@ -23,6 +23,8 @@ from typing import Tuple
 import numpy as np
 from numpy import ndarray
 
+from pymodalib.implementations.python.harmonics.aaft4 import aaft4
+
 
 def harmonicfinder(
     signal: ndarray,
@@ -37,7 +39,7 @@ def harmonicfinder(
         signal, fs, scale_min, scale_max, sigma, time_res
     )
 
-    scalefrequency1 = scale_frequency(scale_min, scale_max, sigma)
+    scalefreq = scale_frequency(scale_min, scale_max, sigma)
 
     m, n = trans1.shape
     detsig = signal
@@ -62,7 +64,7 @@ def harmonicfinder(
         surrsig = aaft4(detsig.conj().T)
 
         transsurr = modbasicwavelet_flow_cmplx4(
-            surrsig, scale_min, scale_max, sigma, time_res
+            surrsig, fs, scale_min, scale_max, sigma, time_res
         )
 
         for a1 in range(m):
@@ -78,6 +80,8 @@ def harmonicfinder(
                 res[a1, a2] = mean_index
                 res[a2, a1] = mean_index
 
+    sig = np.empty((m, surr_count))
+    pos = np.empty((m, m))
     for a1 in range(m):
         for a2 in range(a1):
             ysurr, isurr = np.argsort(np.asarray((res[a1, a2], ressur[:, a1, a2],)))
@@ -86,12 +90,16 @@ def harmonicfinder(
             pos[a1, a2] = sig[0]
             pos[a2, a1] = sig[0]
 
+    surrmean = np.empty((m, m,))
+    surrstd = np.empty((m, m,))
     for a1 in range(m):
         for a2 in range(m):
             surrmean[a1, a2] = np.nanmean(ressur[:, a1, a2])
             surrstd[a1, a2] = np.nanstd(ressur[:, a1, a2])
             sig = (res[a1, a2] - surrmean[a1, a2]) / surrstd[a1, a2]
             pos[a1, a2] = np.min(sig, 5)
+
+    return res, scalefreq
 
 
 def scale_frequency(scale_min: float, scale_max: float, sigma: float) -> ndarray:
@@ -117,11 +125,13 @@ def modbasicwavelet_flow_cmplx4(
     t_start = 0
     t_end = len(signal) / fs
 
-    m_max = np.floor(np.log(scale_max / scale_min) / np.log(sigma))
+    m_max = np.int(np.floor(np.log(scale_max / scale_min) / np.log(sigma)))
     m = np.arange(0, m_max + 2, 1)
 
-    REZ = np.empty((len(m), np.floor(t_end - t_start) / time_res + 1)).fill(np.NaN)
-    flo = np.floor((t_end - t_start))
+    REZ = np.empty((len(m), np.int(np.floor(t_end - t_start) / time_res + 1))).fill(
+        np.NaN
+    )
+    flo = np.int(np.floor((t_end - t_start)))
     stevec = 0
 
     for z in range(1, len(m)):
@@ -149,11 +159,11 @@ def modbasicwavelet_flow_cmplx4(
 
         # Round up st_kor for accuracy.
         if np.mod(st_kor, fs) != 0:
-            st_kor = fs * np.ceil(st_kor / fs)
+            st_kor = fs * np.int(np.ceil(st_kor / fs))
 
         # Round up margin for safety.
         if np.mod(margin, fs) != 0:
-            margin = fs * np.ceil(margin / fs)
+            margin = fs * np.int(np.ceil(margin / fs))
 
         u = np.arange(-st_kor / fs, st_kor / fs, 1 / fs)
 
@@ -163,24 +173,25 @@ def modbasicwavelet_flow_cmplx4(
             * np.exp(-(u ** 2) / (2 * s ** 2))
         )
 
-        X = np.fft.fft(np.concatenate((wavelet, np.zeros(1, len(signal)))), axis=0)
-        Y = np.fft.fft(np.concatenate((signal, np.zeros(1, len(wavelet)))), axis=0)
+        X = np.fft.fft(np.concatenate((wavelet, np.zeros((len(signal),)))), axis=0)
+        Y = np.fft.fft(np.concatenate((signal, np.zeros((len(wavelet),)))), axis=0)
 
         con = np.fft.ifft(X * Y, axis=0)
 
-        rez = con[
-            np.arange(
-                st_kor + margin, (st_kor - margin + (flo * fs) + 1), fs * time_res
-            )
-        ]
+        step = np.int(fs * time_res)
+        if step != fs * time_res:
+            raise Exception("'fs' and 'time_res' must be integers.")
+
+        rez = con[np.arange(st_kor + margin, (st_kor - margin + (flo * fs) + 1), step)]
 
         stevec += 1
         if margin / (fs * time_res) > 0:
+            cols = np.int(margin / (fs * time_res))
             trans = np.concatenate(
                 (
-                    np.empty((1, margin / (fs * time_res))).fill(np.NaN),
+                    np.empty((1, cols)).fill(np.NaN),
                     rez,
-                    np.empty((1, margin / (fs * time_res))),
+                    np.empty((1, cols)).fill(np.NaN),
                 )
             )
         else:
@@ -206,6 +217,9 @@ def indexfinder3(data1, data2) -> Tuple[ndarray, ndarray]:
 
     dummy1 = np.arange(0, len(data1))
     dummy2 = np.arange(0, len(data2))
+
+    pslow = np.empty(dummy1.shape)
+    pfast = np.empty(dummy2.shape)
 
     pslow[i1] = np.ceil(bins * dummy1 / len(data1))
     pfast[i1] = np.ceil(bins * dummy2 / len(data2))

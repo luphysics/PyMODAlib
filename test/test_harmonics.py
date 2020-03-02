@@ -15,7 +15,7 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 import numpy as np
 
-from algorithms.harmonics.harmonics import harmonicfinder
+from pymodalib.algorithms.harmonics.harmonics import harmonicfinder
 
 
 def test_harmonics():
@@ -27,7 +27,7 @@ def test_harmonics():
     times = np.arange(1 / fs, time + 1 / fs, 1 / fs)
     signal = (
         0.1 * np.random.randn(1, len(times)) + np.sin(2 * np.pi * freq * times) ** 3
-    )
+    )[0, :]
 
     scale_min = 0.5
     scale_max = 40
