@@ -13,6 +13,10 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
-from pymodalib.implementations.python.harmonics.harmonics import harmonicfinder as impl
+from pymodalib.implementations.python.harmonics.harmonics import (
+    harmonicfinder_impl_python as impl,
+)
 
-harmonicfinder = impl
+
+def harmonicfinder(*args, **kwargs):
+    return impl(*args, **kwargs)
