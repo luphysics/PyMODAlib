@@ -1,8 +1,26 @@
 # PyMODAlib
 
-*Current status: experimental and work-in-progress*.
+`PyMODAlib` is a Python library containing the algorithms used by PyMODA. 
 
-`PyMODAlib` is a Python library containing the algorithms used by PyMODA. Some of these algorithms are MATLAB-packaged libraries; some are pure-Python translations.
+Some of these algorithms are MATLAB-packaged libraries, while some are Python translations of MODA's algorithms.
+
+## Installing PyMODAlib
+
+`PyMODAlib` can be installed using `pip`:
+
+```bash
+pip install PyMODAlib
+```
+
+## Current status
+
+`PyMODAlib` is still early in development. Currently, the features implemented are:
+
+- Detecting harmonics.
+
+## Examples
+
+There are examples of using PyMODAlib's functions in the `examples` directory.
 
 ## Developer notes
 
