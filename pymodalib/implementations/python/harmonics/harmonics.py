@@ -38,6 +38,13 @@ def harmonicfinder_impl_python(
     """
     Python implementation of the harmonicfinder function.
     """
+    try:
+        x, y = signal.shape
+        if y > x:
+            signal = signal[0, :]
+    except ValueError:
+        pass
+
     output1 = modbasicwavelet_flow_cmplx4(
         signal, fs, scale_min, scale_max, sigma, time_res
     )

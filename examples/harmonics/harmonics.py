@@ -40,7 +40,7 @@ def mesh_plot(x, y, c, title):
 fs = 50
 
 # Load signal from data file.
-signal = loadmat("t_series.mat").get("t_series")[0, :]
+signal = loadmat("t_series.mat").get("t_series")
 
 scale_min = 0.5
 scale_max = 40
