@@ -128,7 +128,7 @@ def scale_frequency(scale_min: float, scale_max: float, sigma: float) -> ndarray
     scalefreq = np.empty((len(m),))
 
     for z in range(len(m)):
-        scalefreq[z] = 1 / (scale_min * (1.05 ** z))
+        scalefreq[z] = 1 / (scale_min * (sigma ** z))
 
     return scalefreq
 
