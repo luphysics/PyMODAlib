@@ -13,47 +13,21 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
-import numpy as np
+import os
+
 from matplotlib import pyplot as plt
 from scipy.io import loadmat
 
 from pymodalib.algorithms.harmonics.harmonics import harmonicfinder
 
-
-def test_harmonics():
-    fs = 50
-
-    # time = 100
-    # freq = 1 / 7
-    # times = np.arange(1 / fs, time + 1 / fs, 1 / fs)
-    # signal = (
-    #                  0.1 * np.random.randn(1, len(times)) + np.sin(2 * np.pi * freq * times) ** 3
-    #          )[0, :]
-
-    signal = loadmat("t_series.mat").get("t_series")[0, :]
-
-    scale_min = 0.5
-    scale_max = 40
-    sigma = 1.05
-    time_res = 0.1
-
-    scale_freq, res, pos1, pos2 = harmonicfinder(
-        signal, fs, scale_min, scale_max, sigma, time_res, 2
-    )
-
-    mesh_plot(scale_freq, scale_freq, res, "Raw harmonics")
-    mesh_plot(scale_freq, scale_freq, pos1, "Higher than how many AAFT surrogates")
-    mesh_plot(
-        scale_freq,
-        scale_freq,
-        pos2,
-        "Relative to mean and std of surrogate distribution",
-    )
-
-    plt.show()
+# Set the working directory to this file's location.
+os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
 
 def mesh_plot(x, y, c, title):
+    """
+    Function which plots the data as a mesh.
+    """
     fig, ax = plt.subplots()
 
     ax.pcolormesh(x, y, c, shading="flat")
@@ -63,5 +37,24 @@ def mesh_plot(x, y, c, title):
     ax.set_title(title)
 
 
-if __name__ == "__main__":
-    test_harmonics()
+fs = 50
+
+# Load signal from data file.
+signal = loadmat("t_series.mat").get("t_series")[0, :]
+
+scale_min = 0.5
+scale_max = 40
+sigma = 1.05
+time_res = 0.1
+
+scale_freq, res, pos1, pos2 = harmonicfinder(
+    signal, fs, scale_min, scale_max, sigma, time_res, 2
+)
+
+mesh_plot(scale_freq, scale_freq, res, "Raw harmonics")
+mesh_plot(scale_freq, scale_freq, pos1, "Higher than how many AAFT surrogates")
+mesh_plot(
+    scale_freq, scale_freq, pos2, "Relative to mean and std of surrogate distribution",
+)
+
+plt.show()
