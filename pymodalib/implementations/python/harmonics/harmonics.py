@@ -36,7 +36,7 @@ def harmonicfinder_impl_python(
     surr_count: int,
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray]:
     """
-    Pure-Python implementation of the harmonicfinder function.
+    Python implementation of the harmonicfinder function.
     """
     output1 = modbasicwavelet_flow_cmplx4(
         signal, fs, scale_min, scale_max, sigma, time_res
@@ -73,7 +73,9 @@ def harmonicfinder_impl_python(
         )
 
         for a1 in range(m):
-            margin = np.int(np.ceil((np.sum(np.isnan(np.angle(output1[a1, :n])))) / 2))
+            margin = np.int(
+                np.ceil((np.sum(np.isnan(np.angle(output1[a1, : n + 1])))) / 2)
+            )
             phase1 = np.angle(output1[a1, margin : n - margin])  # Slow.
 
             for a2 in range(1, a1 + 2):
@@ -87,21 +89,22 @@ def harmonicfinder_impl_python(
     pos = np.empty((m, m))
 
     for a1 in range(m):
-        for a2 in range(a1):
-            _res_a1_a2 = res[a1, a2]
+        for a2 in range(1, a1 + 2):
+            _res_a1_a2 = res[a1, a2 - 1]
             if not hasattr(_res_a1_a2, "__len__"):
                 _res_a1_a2 = np.asarray((_res_a1_a2,))
 
-            isurr = np.argsort(np.concatenate((_res_a1_a2, ressur[:, a1, a2],)))
+            isurr = np.argsort(np.concatenate((_res_a1_a2, ressur[:, a1, a2 - 1],)))
             sig[isurr] = np.arange(0, surr_count + 1)
 
-            pos[a1, a2] = sig[0]
-            pos[a2, a1] = sig[0]
+            pos[a1, a2 - 1] = sig[0]
+            pos[a2 - 1, a1] = sig[0]
 
     pos1 = pos.copy()
 
     surrmean = np.empty((m, m,))
     surrstd = np.empty((m, m,))
+
     for a1 in range(m):
         for a2 in range(m):
             surrmean[a1, a2] = np.nanmean(ressur[:, a1, a2])

@@ -21,12 +21,11 @@ from pymodalib.algorithms.harmonics.harmonics import harmonicfinder
 
 
 def test_harmonics():
-    time = 100
-    freq = 1 / 7
-
     fs = 50
 
-    times = np.arange(1 / fs, time + 1 / fs, 1 / fs)
+    # time = 100
+    # freq = 1 / 7
+    # times = np.arange(1 / fs, time + 1 / fs, 1 / fs)
     # signal = (
     #                  0.1 * np.random.randn(1, len(times)) + np.sin(2 * np.pi * freq * times) ** 3
     #          )[0, :]
@@ -42,15 +41,21 @@ def test_harmonics():
         signal, fs, scale_min, scale_max, sigma, time_res, 2
     )
 
-    mesh(scale_freq, scale_freq, res, "Raw harmonics")
-    mesh(scale_freq, scale_freq, pos1, "Higher than how many AAFT surrogates")
-    mesh(scale_freq, scale_freq, pos2, "Relative to mean and std of surr distribution")
+    mesh_plot(scale_freq, scale_freq, res, "Raw harmonics")
+    mesh_plot(scale_freq, scale_freq, pos1, "Higher than how many AAFT surrogates")
+    mesh_plot(
+        scale_freq,
+        scale_freq,
+        pos2,
+        "Relative to mean and std of surrogate distribution",
+    )
 
     plt.show()
 
 
-def mesh(x, y, c, title):
+def mesh_plot(x, y, c, title):
     fig, ax = plt.subplots()
+
     ax.pcolormesh(x, y, c, shading="flat")
 
     ax.set_yscale("log")
