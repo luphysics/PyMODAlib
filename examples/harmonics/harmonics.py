@@ -18,7 +18,7 @@ import os
 from matplotlib import pyplot as plt
 from scipy.io import loadmat
 
-from pymodalib.algorithms.harmonics.harmonics import harmonicfinder
+from pymodalib.algorithms.harmonics import harmonicfinder
 
 # Set the working directory to this file's location.
 os.chdir(os.path.abspath(os.path.dirname(__file__)))

@@ -16,6 +16,7 @@
 
 from os import path
 
+import setuptools
 from setuptools import setup
 
 here = path.abspath(path.dirname(__file__))
@@ -26,7 +27,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 setup(
     name="PyMODAlib",
     version="0.1.3b1",
-    packages=["pymodalib"],
+    packages=setuptools.find_packages(),
     python_requires="~=3.6",
     install_requires=["numpy>=1.18.1", "scipy>=1.4.1"],
     description="Library providing Python implementations of MODA's algorithms.",
