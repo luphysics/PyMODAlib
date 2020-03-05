@@ -63,6 +63,7 @@ def harmonicfinder_impl_python(
 
     ressur = np.empty((surr_count, m, m,))
     ressur.fill(np.NaN)
+
     for sigb in range(surr_count):
         print(f"Surrogate: {sigb}")
 
@@ -79,8 +80,8 @@ def harmonicfinder_impl_python(
                 phase2 = np.angle(transsurr[a2 - 1, margin : n - margin])  # Fast.
 
                 binner, mean_index = indexfinder3(phase1, phase2)
-                res[a1, a2 - 1] = mean_index
-                res[a2 - 1, a1] = mean_index
+                ressur[sigb, a1, a2 - 1] = mean_index
+                ressur[sigb, a2 - 1, a1] = mean_index
 
     sig = np.empty((1 + ressur.shape[0],))
     pos = np.empty((m, m))
