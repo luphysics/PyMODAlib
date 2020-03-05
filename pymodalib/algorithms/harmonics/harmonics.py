@@ -19,4 +19,7 @@ from pymodalib.implementations.python.harmonics.harmonics import (
 
 
 def harmonicfinder(*args, **kwargs):
+    """
+    Harmonic-finder algorithm.
+    """
     return impl(*args, **kwargs)

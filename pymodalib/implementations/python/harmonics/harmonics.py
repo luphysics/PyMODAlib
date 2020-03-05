@@ -35,30 +35,31 @@ def harmonicfinder_impl_python(
     time_res: float,
     surr_count: int,
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray]:
-    trans1 = modbasicwavelet_flow_cmplx4(
+    """
+    Pure-Python implementation of the harmonicfinder function.
+    """
+    output1 = modbasicwavelet_flow_cmplx4(
         signal, fs, scale_min, scale_max, sigma, time_res
     )
 
     scalefreq = scale_frequency(scale_min, scale_max, sigma)
 
-    m, n = trans1.shape
+    m, n = output1.shape
     detsig = signal
 
     res = np.empty((m, m,))
     res.fill(np.NaN)
 
     for a1 in range(m):
-        margin = np.ceil((np.sum(np.isnan(np.angle(trans1[a1, :n])))) / 2)
-        margin = np.int(margin)
+        margin = np.int(np.ceil((np.sum(np.isnan(np.angle(output1[a1, : n + 1])))) / 2))
+        phase1 = np.angle(output1[a1, margin : n - margin])  # Slow.
 
-        phase1 = np.angle(trans1[a1, margin : n - margin])  # Slow.
-
-        for a2 in range(a1):
-            phase2 = np.angle(trans1[a2, margin : n - margin])  # Fast.
+        for a2 in range(1, a1 + 2):
+            phase2 = np.angle(output1[a2 - 1, margin : n - margin])  # Fast.
 
             binner, mean_index = indexfinder3(phase1, phase2)
-            res[a1, a2] = mean_index
-            res[a2, a1] = mean_index
+            res[a1, a2 - 1] = mean_index
+            res[a2 - 1, a1] = mean_index
 
     ressur = np.empty((surr_count, m, m,))
     ressur.fill(np.NaN)
@@ -71,15 +72,15 @@ def harmonicfinder_impl_python(
         )
 
         for a1 in range(m):
-            margin = np.int(np.ceil((np.sum(np.isnan(np.angle(trans1[a1, :n])))) / 2))
-            phase1 = np.angle(trans1[a1, margin : n - margin])  # Slow.
+            margin = np.int(np.ceil((np.sum(np.isnan(np.angle(output1[a1, :n])))) / 2))
+            phase1 = np.angle(output1[a1, margin : n - margin])  # Slow.
 
-            for a2 in range(a1):
-                phase2 = np.angle(transsurr[a2, margin : n - margin])  # Fast.
+            for a2 in range(1, a1 + 2):
+                phase2 = np.angle(transsurr[a2 - 1, margin : n - margin])  # Fast.
 
                 binner, mean_index = indexfinder3(phase1, phase2)
-                res[a1, a2] = mean_index
-                res[a2, a1] = mean_index
+                res[a1, a2 - 1] = mean_index
+                res[a2 - 1, a1] = mean_index
 
     sig = np.empty((1 + ressur.shape[0],))
     pos = np.empty((m, m))
