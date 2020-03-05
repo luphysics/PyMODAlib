@@ -25,7 +25,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="PyMODAlib",
-    version="0.1.1b1",
+    version="0.1.3b1",
     packages=["pymodalib"],
     python_requires="~=3.6",
     install_requires=["numpy>=1.18.1", "scipy>=1.4.1"],
