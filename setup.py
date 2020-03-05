@@ -27,7 +27,7 @@ setup(
     name="PyMODAlib",
     version="0.1.0b1",
     packages=["pymodalib"],
-    python_requires="~=3.6, <3.8",
+    python_requires="~=3.6",
     install_requires=["numpy>=1.18.1", "scipy>=1.4.1"],
     description="Library providing Python implementations of MODA's algorithms.",
     long_description=long_description,
