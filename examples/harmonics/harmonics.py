@@ -16,17 +16,24 @@
 import os
 
 from matplotlib import pyplot as plt
+from numpy import ndarray
 from scipy.io import loadmat
 
 from pymodalib.algorithms.harmonics import harmonicfinder
 
 # Set the working directory to this file's location.
+# This prevents issues when loading the .mat file.
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
 
-def mesh_plot(x, y, c, title):
+def mesh_plot(x: ndarray, y: ndarray, c: ndarray, title: str) -> None:
     """
     Function which plots the data as a mesh.
+
+    :param x: [1D array] the x-values
+    :param y: [1D array] the y-values
+    :param c: [2D array] the amplitude of the signal at each point
+    :param title: the title of the plot
     """
     fig, ax = plt.subplots()
 
@@ -37,24 +44,34 @@ def mesh_plot(x, y, c, title):
     ax.set_title(title)
 
 
-fs = 50
-
-# Load signal from data file.
+# Load signal from a .mat file named "t_series.mat".
 signal = loadmat("t_series.mat").get("t_series")
 
+# Define the parameters.
 scale_min = 0.5
 scale_max = 40
 sigma = 1.05
-time_res = 0.1
+time_resolution = 0.1
+fs = 50  # Sampling frequency.
 
+# Perform the calculation.
 scale_freq, res, pos1, pos2 = harmonicfinder(
-    signal, fs, scale_min, scale_max, sigma, time_res, 2
+    signal, fs, scale_min, scale_max, sigma, time_resolution, 2
 )
 
+# Plot the results.
 mesh_plot(scale_freq, scale_freq, res, "Raw harmonics")
-mesh_plot(scale_freq, scale_freq, pos1, "Higher than how many AAFT surrogates")
 mesh_plot(
-    scale_freq, scale_freq, pos2, "Relative to mean and std of surrogate distribution",
+    scale_freq,
+    scale_freq,
+    pos1,
+    "Number of AAFT surrogates which harmonics are higher than",
+)
+mesh_plot(
+    scale_freq,
+    scale_freq,
+    pos2,
+    "Harmonics relative to mean and std of surrogate distribution",
 )
 
 plt.show()

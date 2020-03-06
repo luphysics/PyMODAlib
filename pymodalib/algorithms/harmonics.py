@@ -13,13 +13,37 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+from typing import Tuple
+
+from numpy import ndarray
+
 from pymodalib.implementations.python.harmonics.harmonics import (
     harmonicfinder_impl_python as impl,
 )
 
 
-def harmonicfinder(*args, **kwargs):
+def harmonicfinder(
+    signal: ndarray,
+    fs: float,
+    scale_min: float,
+    scale_max: float,
+    sigma: float = 1.05,
+    time_resolution: float = 0.1,
+    surrogates: int = 10,
+) -> Tuple[ndarray, ndarray, ndarray, ndarray]:
     """
     Harmonic-finder algorithm.
+
+    :param signal: [1D array] the signal to analyse
+    :param fs: the sampling frequency of the signal
+    :param scale_min:                                   #TODO docs
+    :param scale_max:                                   #TODO docs
+    :param sigma:                                       #TODO docs
+    :param time_resolution: the time resolution
+    :param surrogates: the number of surrogates
+    :return: [1D array] the frequencies;                #TODO docs
+             [2D array] the raw harmonics;
+             [2D array] the number of surrogates which the raw harmonics are higher than at each point;
+             [2D array] the raw harmonics relative to the mean and standard deviation of the surrogate distribution
     """
-    return impl(*args, **kwargs)
+    return impl(signal, fs, scale_min, scale_max, sigma, time_resolution, surrogates)
