@@ -29,7 +29,7 @@ with open(path.join(here, "requirements.txt")) as f:
 
 setup(
     name="PyMODAlib",
-    version="0.1.4b1",
+    version="0.1.5b2",
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
     install_requires=requirements,
