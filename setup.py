@@ -13,10 +13,11 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
-
+import glob
+import os
 from os import path
+from typing import List
 
-import setuptools
 from setuptools import setup
 
 here = path.abspath(path.dirname(__file__))
@@ -27,10 +28,27 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 with open(path.join(here, "requirements.txt")) as f:
     requirements = f.readlines()
 
+root = "pymodalib"
+
+
+def find_packages() -> List[str]:
+    """
+    Finds all packages which will be passed to the 'setup' function.
+    """
+    packages = [root]
+
+    for directory in glob.glob(f"{root}/**/*/", recursive=True):
+        if "__pycache__" not in directory:
+            package = directory[:-1].replace(os.sep, ".")
+            packages.append(package)
+
+    return packages
+
+
 setup(
     name="PyMODAlib",
-    version="0.1.5b2",
-    packages=setuptools.find_packages(),
+    version="0.1.5b4",
+    packages=find_packages(),
     python_requires=">=3.6",
     install_requires=requirements,
     description="Library providing Python implementations of MODA's algorithms.",
