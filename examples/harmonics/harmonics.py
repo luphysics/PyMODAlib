@@ -15,9 +15,9 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 import os
 
+import scipy.io
 from matplotlib import pyplot as plt
 from numpy import ndarray
-from scipy.io import loadmat
 
 from pymodalib.algorithms.harmonics import harmonicfinder
 
@@ -45,7 +45,7 @@ def mesh_plot(x: ndarray, y: ndarray, c: ndarray, title: str) -> None:
 
 
 # Load signal from a .mat file named "t_series.mat".
-signal = loadmat("t_series.mat").get("t_series")
+signal = scipy.io.loadmat("t_series.mat").get("t_series")
 
 # Define the parameters.
 scale_min = 0.5
@@ -59,24 +59,26 @@ fs = 50
 # Number of surrogates.
 surrogates = 4
 
-# Perform the calculation.
-scale_freq, res, pos1, pos2 = harmonicfinder(
-    signal, fs, scale_min, scale_max, sigma, time_resolution, surrogates
-)
+# Note: this 'if' statement is important on Windows.
+if __name__ == "__main__":
+    # Perform the calculation.
+    scale_freq, res, pos1, pos2 = harmonicfinder(
+        signal, fs, scale_min, scale_max, sigma, time_resolution, surrogates
+    )
 
-# Plot the results.
-mesh_plot(scale_freq, scale_freq, res, "Raw harmonics")
-mesh_plot(
-    scale_freq,
-    scale_freq,
-    pos1,
-    "Number of AAFT surrogates which harmonics are higher than",
-)
-mesh_plot(
-    scale_freq,
-    scale_freq,
-    pos2,
-    "Harmonics relative to mean and std of surrogate distribution",
-)
+    # Plot the results.
+    mesh_plot(scale_freq, scale_freq, res, "Raw harmonics")
+    mesh_plot(
+        scale_freq,
+        scale_freq,
+        pos1,
+        "Number of AAFT surrogates which harmonics are higher than",
+    )
+    mesh_plot(
+        scale_freq,
+        scale_freq,
+        pos2,
+        "Harmonics relative to mean and std of surrogate distribution",
+    )
 
-plt.show()
+    plt.show()
