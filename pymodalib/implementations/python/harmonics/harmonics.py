@@ -75,7 +75,7 @@ def harmonicfinder_impl_python(
     ressur = np.empty((surr_count, m, m,))
     ressur.fill(np.NaN)
 
-    scheduler = Scheduler(shared_memory=True)
+    scheduler = Scheduler(shared_memory=False)
     args = [
         (i, output1, m, n, detsig, fs, scale_min, scale_max, sigma, time_res)
         for i in range(surr_count)
