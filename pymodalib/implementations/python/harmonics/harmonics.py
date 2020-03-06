@@ -18,7 +18,6 @@
 Harmonics finder, translated from the MATLAB code which was written by Lawrence Sheppard.
 """
 
-from timeit import default_timer as timer
 from typing import Tuple, List
 
 import numpy as np
@@ -51,43 +50,40 @@ def harmonicfinder_impl_python(
         signal, fs, scale_min, scale_max, sigma, time_res
     )
 
-    print("Calculating harmonics...")
-
     scalefreq = scale_frequency(scale_min, scale_max, sigma)
 
     m, n = output1.shape
     detsig = signal
 
-    res = np.empty((m, m,))
-    res.fill(np.NaN)
-
-    for a1 in range(m):
-        margin = np.int(np.ceil((np.sum(np.isnan(np.angle(output1[a1, : n + 1])))) / 2))
-        phase1 = np.angle(output1[a1, margin : n - margin])  # Slow.
-
-        for a2 in range(1, a1 + 2):
-            phase2 = np.angle(output1[a2 - 1, margin : n - margin])  # Fast.
-
-            _, mean_index = indexfinder3(phase1, phase2)
-            res[a1, a2 - 1] = mean_index
-            res[a2 - 1, a1] = mean_index
-
     ressur = np.empty((surr_count, m, m,))
     ressur.fill(np.NaN)
 
     scheduler = Scheduler(shared_memory=False)
-    args = [
+
+    surr_args = [
         (i, output1, m, n, detsig, fs, scale_min, scale_max, sigma, time_res)
         for i in range(surr_count)
     ]
 
-    # Calculate surrogates in parallel.
-    result: List[ndarray] = scheduler.map_blocking(
-        target=_calculate_surrogate, args=args
-    )
+    # Add surrogate calculations to scheduler.
+    for args in surr_args:
+        scheduler.add(target=_calculate_surrogate, args=args)
 
-    for sigb in range(surr_count):
-        ressur[sigb, :, :] = result[sigb][:, :]
+    if surr_count > 0:
+        # Add harmonic calculation for main signal to scheduler. This should be the last item added.
+        scheduler.add(target=_calculate_harmonics, args=(output1, m, n))
+
+        # Run scheduler.
+        result: List[ndarray] = scheduler.run_blocking()
+
+        # Get main harmonics result.
+        res = result[-1]
+
+        # Get surrogate results.
+        for sigb in range(surr_count):
+            ressur[sigb, :, :] = result[sigb][:, :]
+    else:
+        res = _calculate_harmonics(output1, m, n, parallel=False)
 
     sig = np.empty((1 + ressur.shape[0],))
     pos = np.empty((m, m))
@@ -116,7 +112,7 @@ def harmonicfinder_impl_python(
             sig = (res[a1, a2] - surrmean[a1, a2]) / surrstd[a1, a2]
             pos[a1, a2] = np.min([sig, 5])
 
-    pos2 = pos.copy()
+    pos2 = pos
 
     return (
         scalefreq,
@@ -126,9 +122,29 @@ def harmonicfinder_impl_python(
     )
 
 
+def _calculate_harmonics(output1, m, n, parallel=True) -> ndarray:
+    print(f"Calculating harmonics{' (running in parallel)' if parallel else ''}...")
+
+    res = np.empty((m, m,))
+    res.fill(np.NaN)
+
+    for a1 in range(m):
+        margin = np.int(np.ceil((np.sum(np.isnan(np.angle(output1[a1, : n + 1])))) / 2))
+        phase1 = np.angle(output1[a1, margin : n - margin])  # Slow.
+
+        for a2 in range(1, a1 + 2):
+            phase2 = np.angle(output1[a2 - 1, margin : n - margin])  # Fast.
+
+            _, mean_index = indexfinder3(phase1, phase2)
+            res[a1, a2 - 1] = mean_index
+            res[a2 - 1, a1] = mean_index
+
+    return res
+
+
 def _calculate_surrogate(
     sigb, output1, m, n, detsig, fs, scale_min, scale_max, sigma, time_res
-):
+) -> ndarray:
     print(f"Calculating surrogate {sigb + 1} (running in parallel)...")
 
     ressur = np.empty((m, m,))
