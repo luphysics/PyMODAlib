@@ -52,11 +52,16 @@ scale_min = 0.5
 scale_max = 40
 sigma = 1.05
 time_resolution = 0.1
-fs = 50  # Sampling frequency.
+
+# Sampling frequency.
+fs = 50
+
+# Number of surrogates.
+surrogates = 4
 
 # Perform the calculation.
 scale_freq, res, pos1, pos2 = harmonicfinder(
-    signal, fs, scale_min, scale_max, sigma, time_resolution, 2
+    signal, fs, scale_min, scale_max, sigma, time_resolution, surrogates
 )
 
 # Plot the results.
