@@ -18,10 +18,12 @@
 Harmonics finder, translated from the MATLAB code which was written by Lawrence Sheppard.
 """
 
-from typing import Tuple
+from timeit import default_timer as timer
+from typing import Tuple, List
 
 import numpy as np
 from numpy import ndarray
+from scheduler.Scheduler import Scheduler
 
 from pymodalib.implementations.python.harmonics.aaft4 import aaft4
 
@@ -49,6 +51,8 @@ def harmonicfinder_impl_python(
         signal, fs, scale_min, scale_max, sigma, time_res
     )
 
+    print("Calculating harmonics...")
+
     scalefreq = scale_frequency(scale_min, scale_max, sigma)
 
     m, n = output1.shape
@@ -64,33 +68,26 @@ def harmonicfinder_impl_python(
         for a2 in range(1, a1 + 2):
             phase2 = np.angle(output1[a2 - 1, margin : n - margin])  # Fast.
 
-            binner, mean_index = indexfinder3(phase1, phase2)
+            _, mean_index = indexfinder3(phase1, phase2)
             res[a1, a2 - 1] = mean_index
             res[a2 - 1, a1] = mean_index
 
     ressur = np.empty((surr_count, m, m,))
     ressur.fill(np.NaN)
 
+    scheduler = Scheduler(shared_memory=True)
+    args = [
+        (i, output1, m, n, detsig, fs, scale_min, scale_max, sigma, time_res)
+        for i in range(surr_count)
+    ]
+
+    # Calculate surrogates in parallel.
+    result: List[ndarray] = scheduler.map_blocking(
+        target=_calculate_surrogate, args=args
+    )
+
     for sigb in range(surr_count):
-        print(f"Surrogate: {sigb}")
-
-        surrsig, _ = aaft4(detsig.conj().T)
-        transsurr = modbasicwavelet_flow_cmplx4(
-            surrsig, fs, scale_min, scale_max, sigma, time_res
-        )
-
-        for a1 in range(m):
-            margin = np.int(
-                np.ceil((np.sum(np.isnan(np.angle(output1[a1, : n + 1])))) / 2)
-            )
-            phase1 = np.angle(output1[a1, margin : n - margin])  # Slow.
-
-            for a2 in range(1, a1 + 2):
-                phase2 = np.angle(transsurr[a2 - 1, margin : n - margin])  # Fast.
-
-                binner, mean_index = indexfinder3(phase1, phase2)
-                ressur[sigb, a1, a2 - 1] = mean_index
-                ressur[sigb, a2 - 1, a1] = mean_index
+        ressur[sigb, :, :] = result[sigb][:, :]
 
     sig = np.empty((1 + ressur.shape[0],))
     pos = np.empty((m, m))
@@ -127,6 +124,38 @@ def harmonicfinder_impl_python(
         pos1.conj().T,
         pos2.conj().T,
     )
+
+
+def _calculate_surrogate(
+    sigb, output1, m, n, detsig, fs, scale_min, scale_max, sigma, time_res
+):
+    print(f"Calculating surrogate {sigb + 1} (running in parallel)...")
+
+    ressur = np.empty((m, m,))
+    ressur.fill(np.NaN)
+
+    # This is important. When running in parallel, the random state is identical for all processes;
+    # rand() needs to be called according to the index of the process (which is given by the surrogate number, 'sigb').
+    for i in range(sigb):
+        np.random.rand()
+
+    surrsig, _ = aaft4(detsig.conj().T)
+    transsurr = modbasicwavelet_flow_cmplx4(
+        surrsig, fs, scale_min, scale_max, sigma, time_res
+    )
+
+    for a1 in range(m):
+        margin = np.int(np.ceil((np.sum(np.isnan(np.angle(output1[a1, : n + 1])))) / 2))
+        phase1 = np.angle(output1[a1, margin : n - margin])  # Slow.
+
+        for a2 in range(1, a1 + 2):
+            phase2 = np.angle(transsurr[a2 - 1, margin : n - margin])  # Fast.
+
+            _, mean_index = indexfinder3(phase1, phase2)
+            ressur[a1, a2 - 1] = mean_index
+            ressur[a2 - 1, a1] = mean_index
+
+    return ressur
 
 
 def scale_frequency(scale_min: float, scale_max: float, sigma: float) -> ndarray:
