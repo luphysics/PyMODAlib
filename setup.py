@@ -24,12 +24,15 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
+with open(path.join(here, "requirements.txt")) as f:
+    requirements = f.readlines()
+
 setup(
     name="PyMODAlib",
     version="0.1.3b1",
     packages=setuptools.find_packages(),
     python_requires="~=3.6",
-    install_requires=["numpy>=1.18.1", "scipy>=1.4.1"],
+    install_requires=requirements,
     description="Library providing Python implementations of MODA's algorithms.",
     long_description=long_description,
     long_description_content_type="text/markdown",
