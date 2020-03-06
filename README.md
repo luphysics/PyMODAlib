@@ -4,16 +4,26 @@
 ![PyPI: version](https://img.shields.io/pypi/v/PyMODAlib)
 ![PyPI: Python version](https://img.shields.io/pypi/pyversions/PyMODAlib)
 
-PyMODAlib is a Python library containing the algorithms used by [PyMODA](https://github.com/luphysics/PyMODA). PyMODAlib can be used to programmatically perform time-frequency analysis.
+PyMODAlib is a Python library containing the algorithms used by [PyMODA](https://github.com/luphysics/PyMODA). With PyMODAlib, you can write Python scripts to perform the same calculations as PyMODA.
 
 Some of PyMODAlib's algorithms are MATLAB-packaged libraries, while some are Python translations of algorithms belonging to [MODA](https://github.com/luphysics/MODA).
 
 ## Installing PyMODAlib
 
-PyMODAlib can be installed using `pip`:
+PyMODAlib can be installed using `pip`. Open a terminal and run:
 
 ```bash
 pip install pymodalib
+```
+
+> **Tip:** on macOS/Linux, replace `pip` with the correct command for your system (e.g. `pip3`).
+
+### Updating PyMODAlib
+
+PyMODAlib is likely to be updated regularly. To update your installed version, open a terminal and run:
+
+```bash
+pip install -U pymodalib
 ```
 
 ## Current status
