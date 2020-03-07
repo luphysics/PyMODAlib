@@ -1,3 +1,6 @@
+### Manually added ###
+.idea/misc.xml
+.idea/pymoda-lib.iml
 
 # Created by https://www.gitignore.io/api/pycharm,visualstudiocode,vim,python
 # Edit at https://www.gitignore.io/?templates=pycharm,visualstudiocode,vim,python
