@@ -35,6 +35,7 @@ def harmonicfinder_impl_python(
     sigma: float,
     time_res: float,
     surr_count: int,
+    parallel: bool,
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray]:
     """
     Python implementation of the harmonicfinder function.
@@ -65,25 +66,25 @@ def harmonicfinder_impl_python(
         for i in range(surr_count)
     ]
 
+    # Add harmonic calculation for main signal to scheduler. This should be the first item added.
+    scheduler.add(target=_calculate_harmonics, args=(output1, m, n, surr_count, True))
+
     # Add surrogate calculations to scheduler.
     for args in surr_args:
         scheduler.add(target=_calculate_surrogate, args=args)
 
-    if surr_count > 0:
-        # Add harmonic calculation for main signal to scheduler. This should be the last item added.
-        scheduler.add(target=_calculate_harmonics, args=(output1, m, n))
-
+    if surr_count > 0 and parallel:
         # Run scheduler.
         result: List[ndarray] = scheduler.run_blocking()
 
         # Get main harmonics result.
-        res = result[-1]
+        res = result[0]
 
         # Get surrogate results.
-        for sigb in range(surr_count):
-            ressur[sigb, :, :] = result[sigb][:, :]
+        for sigb in range(1, len(result)):
+            ressur[sigb - 1, :, :] = result[sigb][:, :]
     else:
-        res = _calculate_harmonics(output1, m, n, parallel=False)
+        res = _calculate_harmonics(output1, m, n, surr_count, parallel)
 
     sig = np.empty((1 + ressur.shape[0],))
     pos = np.empty((m, m))
@@ -122,13 +123,41 @@ def harmonicfinder_impl_python(
     )
 
 
-def _calculate_harmonics(output1, m, n, parallel=True) -> ndarray:
-    print(f"Calculating harmonics{' (running in parallel)' if parallel else ''}...")
+def _calculate_harmonics(output1, m, n, surr_count: int, parallel=True) -> ndarray:
+    print(f"Calculating harmonics (running in parallel)...")
 
     res = np.empty((m, m,))
     res.fill(np.NaN)
 
-    for a1 in range(m):
+    from multiprocessing import Pool, cpu_count
+
+    if parallel and surr_count < cpu_count() - 2:
+
+        num_processes = cpu_count() - surr_count
+        pool = Pool(processes=num_processes)
+
+        ranges = np.array_split(np.arange(0, m), num_processes)
+        args = [(r[0], r[-1] + 1, output1, n, res, True) for r in ranges]
+
+        results = pool.starmap(_do_harmonics_loop, args)
+
+        # When each process starts, it receives a copy of 'res'; we need to write the results the original array.
+        for r in results:
+            mask = ~np.isnan(r)
+            res[mask] = r[mask]
+    else:
+        # This writes into 'res' directly, so the returned value is not needed.
+        _do_harmonics_loop(0, m, output1, n, res, False)
+
+    return res
+
+
+def _do_harmonics_loop(i: int, j: int, output1, n, res, parallel: bool) -> ndarray:
+    print(
+        f"Calculating harmonics chunk from {i} to {j - 1}, end-inclusive{' (running in parallel)' if parallel else ''}..."
+    )
+
+    for a1 in range(i, j):
         margin = np.int(np.ceil((np.sum(np.isnan(np.angle(output1[a1, : n + 1])))) / 2))
         phase1 = np.angle(output1[a1, margin : n - margin])  # Slow.
 

@@ -30,6 +30,7 @@ def harmonicfinder(
     sigma: float = 1.05,
     time_resolution: float = 0.1,
     surrogates: int = 10,
+    parallel: bool = True,
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray]:
     """
     Harmonic-finder algorithm.
@@ -41,9 +42,12 @@ def harmonicfinder(
     :param sigma:                                       #TODO docs
     :param time_resolution: the time resolution
     :param surrogates: the number of surrogates
+    :param parallel: whether to parallelize the algorithm, which provides a significant speed boost in many cases
     :return: [1D array] the frequencies;                #TODO docs
              [2D array] the raw harmonics;
              [2D array] the number of surrogates which the raw harmonics are higher than at each point;
              [2D array] the raw harmonics relative to the mean and standard deviation of the surrogate distribution
     """
-    return impl(signal, fs, scale_min, scale_max, sigma, time_resolution, surrogates)
+    return impl(
+        signal, fs, scale_min, scale_max, sigma, time_resolution, surrogates, parallel
+    )
