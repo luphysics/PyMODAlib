@@ -40,6 +40,13 @@ def harmonicfinder_impl_python(
     """
     Python implementation of the harmonicfinder function.
     """
+    if fs != int(fs):
+        raise ValueError(
+            f"fs = {fs}, but it must be an integer for harmonics detection."
+        )
+    else:
+        fs = np.int(fs)
+
     try:
         x, y = signal.shape
         if y > x:
