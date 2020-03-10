@@ -17,7 +17,7 @@
 """
 Harmonics finder, translated from the MATLAB code which was written by Lawrence Sheppard.
 """
-
+import warnings
 from typing import Tuple, List
 
 import numpy as np
@@ -307,7 +307,16 @@ def modbasicwavelet_flow_cmplx4(
 
         step = np.int(fs * time_res)
         if step != fs * time_res:
-            raise Exception("'fs' and 'time_res' must be integers.")
+            step = np.int(np.round(step))
+            warnings.warn(
+                f"fs * time_res = {fs * time_res}, but this should be an integer. Rounding to {step}.",
+                RuntimeWarning,
+            )
+
+            if step <= 0:
+                raise Exception(
+                    f"'step' must be a positive integer. Cannot proceed when step = {step}."
+                )
 
         margin = np.int(margin)
         rez = con[np.arange(st_kor + margin, (st_kor - margin + (flo * fs) + 1), step)]

@@ -16,7 +16,7 @@
 """
 Python implementation of the AAFT surrogate from MATLAB code, `aaft4.m`, supplied by Lawrence Sheppard.
 """
-
+import warnings
 from typing import Tuple
 
 import numpy as np
@@ -46,13 +46,38 @@ def aaft4(seriesa: ndarray) -> Tuple[ndarray, ndarray]:
     fftseries = np.fft.fft(seriesc, axis=0)
 
     if np.mod(len(seriesa), 2) == 1:
-        numbers = np.random.rand(1, (len(fftseries) - 1) / 2)
-        phases = 2 * np.pi * numbers
-        phasors = np.exp(1j * phases)
+        f = (len(fftseries) - 1) / 2
 
-        rotfftseries = fftseries * np.concatenate(
-            (np.ones((1,)), phasors, np.ones((1,)), np.fliplr(phasors.conj()))
+        if int(f) != f:
+            warnings.warn(f"'f' is {f} but it should be an integer.", RuntimeWarning)
+
+        f = int(f)
+
+        numbers = np.random.rand(1, f)
+        phases = 2 * np.pi * numbers
+
+        phasors = np.exp(1j * phases)
+        phasors_conj_flip = np.fliplr(phasors.conj())
+
+        try:
+            x, y = phasors.shape
+            if y > x:
+                phasors = phasors[0, :]
+                phasors_conj_flip = phasors_conj_flip[0, :]
+        except ValueError:
+            pass
+
+        concat = np.concatenate(
+            (np.ones((1,)), phasors, np.ones((1,)), phasors_conj_flip)
         )
+
+        try:
+            rotfftseries = fftseries * concat
+        except:  # Fix an issue when the size of 'concat' is 1 larger than the size of 'fftseries'.
+            warnings.warn(
+                f"'fftseries' has different length to 'concat'.", RuntimeWarning
+            )
+            rotfftseries = fftseries * concat[:-1]
 
         ifftrot = np.fft.ifft(rotfftseries, axis=0)
 
