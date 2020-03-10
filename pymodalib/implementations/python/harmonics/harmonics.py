@@ -36,6 +36,7 @@ def harmonicfinder_impl_python(
     time_res: float,
     surr_count: int,
     parallel: bool,
+    crop: bool,
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray]:
     """
     Python implementation of the harmonicfinder function.
@@ -121,6 +122,14 @@ def harmonicfinder_impl_python(
             pos[a1, a2] = np.min([sig, 5])
 
     pos2 = pos
+
+    if crop:
+        mask1 = ~np.all(np.isnan(res), axis=0)
+
+        res = res[mask1][:, mask1]
+        scalefreq = scalefreq[mask1]
+        pos1 = pos1[mask1][:, mask1]
+        pos2 = pos2[mask1][:, mask1]
 
     return (
         scalefreq,
