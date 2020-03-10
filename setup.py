@@ -47,7 +47,7 @@ def find_packages() -> List[str]:
 
 setup(
     name="PyMODAlib",
-    version="0.1.12b1",
+    version="0.1.13b1",
     packages=find_packages(),
     python_requires=">=3.6",
     install_requires=requirements,
