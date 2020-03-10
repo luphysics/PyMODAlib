@@ -41,12 +41,11 @@ def harmonicfinder_impl_python(
     """
     Python implementation of the harmonicfinder function.
     """
-    if fs != int(fs):
-        raise ValueError(
-            f"fs = {fs}, but it must be an integer for harmonics detection."
+    if int(fs * time_res) != fs * time_res:
+        warnings.warn(
+            f"fs * time_res must be an integer, but it is {fs * time_res}. The value will be rounded to {round(fs * time_res)}. You may wish to try a different time resolution.",
+            RuntimeWarning,
         )
-    else:
-        fs = np.int(fs)
 
     try:
         x, y = signal.shape
@@ -278,7 +277,7 @@ def modbasicwavelet_flow_cmplx4(
                 tval_k = ttt
                 break
 
-        st_kor = np.int(tval_k * fs)
+        st_kor = np.int(round(tval_k * fs))
         margin = tval_k2 * fs
 
         # Round up st_kor for accuracy.
@@ -305,9 +304,10 @@ def modbasicwavelet_flow_cmplx4(
 
         con = np.fft.ifft(x * y, axis=0)
 
-        step = np.int(fs * time_res)
+        step = int(round(fs * time_res))
         if step != fs * time_res:
-            step = np.int(np.round(step))
+            step = int(round(step))
+
             warnings.warn(
                 f"fs * time_res = {fs * time_res}, but this should be an integer. Rounding to {step}.",
                 RuntimeWarning,
@@ -319,7 +319,18 @@ def modbasicwavelet_flow_cmplx4(
                 )
 
         margin = np.int(margin)
-        rez = con[np.arange(st_kor + margin, (st_kor - margin + (flo * fs) + 1), step)]
+
+        flo_fs = flo * fs
+        if int(flo_fs) != flo_fs:
+            flo_fs = int(round(flo_fs))
+            warnings.warn(
+                f"flo * fs must be an integer, but is {flo * fs}. Rounding to {flo_fs}.",
+                RuntimeWarning,
+            )
+        else:
+            flo_fs = int(flo_fs)
+
+        rez = con[np.arange(st_kor + margin, (st_kor - margin + flo_fs + 1), step)]
 
         stevec += 1
         if margin / (fs * time_res) > 0:
