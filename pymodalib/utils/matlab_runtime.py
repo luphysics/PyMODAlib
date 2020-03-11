@@ -17,9 +17,10 @@
 # The version of the MATLAB Runtime required.
 import os
 import re
+import warnings
 from typing import List, Optional
 
-from utils.Platform import Platform
+from pymodalib.utils.Platform import Platform
 
 # The version of the MATLAB Runtime which is required by PyMODAlib.
 MATLAB_RUNTIME_VERSION = 96
@@ -29,15 +30,20 @@ regexp = re.compile("v[0-9]{2}")
 
 
 def is_runtime_valid() -> bool:
-    versions = get_matlab_runtime_versions()
-    return any([v == MATLAB_RUNTIME_VERSION for v in versions])
+    warnings.warn(
+        f"Skipping a check for the validity of the MATLAB Runtime, "
+        f"because this functionality is not fully implemented yet.",
+        RuntimeWarning,
+    )
+    # versions = get_matlab_runtime_versions()
+    # return any([v == MATLAB_RUNTIME_VERSION for v in versions])
+    return True  # TODO: fix this function
 
 
 def get_matlab_runtime_versions() -> List[int]:
     versions = []
-    path_var = "path"
 
-    for var in os.environ.get(path_var).split(os.pathsep):
+    for var in get_path_items(platform):
         if platform is Platform.WINDOWS:
             version = get_runtime_version_windows(var)
         elif platform is Platform.LINUX:
@@ -46,12 +52,26 @@ def get_matlab_runtime_versions() -> List[int]:
             version = get_runtime_version_mac_os(var)
         else:
             raise Exception(
-                f"Operating system not recognised. Please use Windows, Linux or macOS."
+                f"Operating system not recognised. "
+                f"Please use Windows, Linux or macOS for running MATLAB-packaged code "
+                f"or switch to the pure-Python implementations where possible."
             )
 
         versions.append(version)
 
     return versions
+
+
+def get_path_items(platform: Platform) -> List[str]:
+    if platform is Platform.WINDOWS:
+        path: str = os.environ.get("path")
+    else:
+        path: str = os.environ.get("PATH")
+
+    if path:
+        return path.split(os.pathsep)
+
+    raise Exception("Environment PATH does not seem to exist.")
 
 
 def get_runtime_version_windows(var: str) -> Optional[int]:
