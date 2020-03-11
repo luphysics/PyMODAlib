@@ -13,12 +13,15 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 import glob
 import os
 from os import path
 from typing import List
 
 from setuptools import setup
+
+VERSION = "0.1.14b1"
 
 here = path.abspath(path.dirname(__file__))
 
@@ -47,7 +50,7 @@ def find_packages() -> List[str]:
 
 setup(
     name="PyMODAlib",
-    version="0.1.13b1",
+    version=VERSION,
     packages=find_packages(),
     python_requires=">=3.6",
     install_requires=requirements,
