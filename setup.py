@@ -21,7 +21,7 @@ from typing import List
 
 from setuptools import setup
 
-VERSION = "0.1.14b1"
+VERSION = "0.2.1b1"
 
 here = path.abspath(path.dirname(__file__))
 
