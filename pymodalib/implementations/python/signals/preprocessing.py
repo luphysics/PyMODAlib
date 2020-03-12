@@ -25,11 +25,16 @@ def preprocess_impl(sig: ndarray, fs: float, fmin: float, fmax: float) -> ndarra
     except ValueError:
         pass
 
+    if fmin is None:
+        fmin = 0
+    if fmax is None:
+        fmax = fs / 2
+
     L = len(sig)
 
     # De-trending.
-    X = np.arange(1, len(sig) + 1).transpose() / fs
-    XM = np.ones((len(X), 4), dtype=np.float64)
+    X = np.arange(1, len(sig) + 1).T / fs
+    XM = np.ones((len(X), 4))
 
     for pn in range(1, 4):
         CX = X ** pn
@@ -40,18 +45,22 @@ def preprocess_impl(sig: ndarray, fs: float, fmin: float, fmax: float) -> ndarra
 
     # Filtering.
     fx = np.fft.fft(new_sig, axis=0)
-    Nq = np.ceil((L + 1) / 2)
+    Nq = np.int(np.ceil((L + 1) / 2))
 
-    ff = np.concatenate([np.arange(0, Nq), -np.arange(1, L - Nq + 1)[::-1]]) * fs / L
+    ff = np.concatenate([np.arange(0, Nq), -np.flip(np.arange(1, L - Nq + 1))]) * fs / L
     ff = ff.reshape(len(ff), 1)
 
     abs_ff = np.abs(ff)
-    if fmin is None:
-        fmin = fs / L  # Avoid error calculating cutoff and ind1.
-    if fmax is None:
-        fmax = np.max(abs_ff) + 1  # Avoid error calculating ind2.
 
     fx[(abs_ff <= np.max([fmin, fs / L])) | (abs_ff >= fmax)] = 0
 
     result = np.real(np.fft.ifft(fx, axis=0))
+
+    try:
+        x, y = result.shape
+        if y == 1:
+            result = result.reshape(x)
+    except ValueError:
+        pass
+
     return result
