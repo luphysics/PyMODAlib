@@ -2,6 +2,8 @@
 .idea/misc.xml
 .idea/pymoda-lib.iml
 
+examples/**/output.npz
+
 # Created by https://www.gitignore.io/api/pycharm,visualstudiocode,vim,python
 # Edit at https://www.gitignore.io/?templates=pycharm,visualstudiocode,vim,python
 
