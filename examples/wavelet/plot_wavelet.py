@@ -30,4 +30,9 @@ fig, ax = plt.subplots()
 mesh1, mesh2 = np.meshgrid(times, freq)
 ax.contourf(mesh1, mesh2, np.abs(wt))
 
+ax.set_yscale("log")
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Frequency (Hz)")
+ax.set_title("Amplitude of wavelet transform")
+
 plt.show()
