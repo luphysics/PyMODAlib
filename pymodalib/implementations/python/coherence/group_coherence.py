@@ -13,17 +13,98 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+import multiprocessing
 import warnings
 from typing import Any
 
 from numpy import ndarray
+import numpy as np
+
+from pymodalib.algorithms.wavelet import wavelet_transform
 
 
 class CoherenceException(Exception):
     pass
 
 
+def avg_wt(signal: ndarray, fs: float, *args, **kwargs):
+    wt, freq = wavelet_transform(signal, fs, *args, **kwargs)
+
+    ampl = np.abs(wt)
+    return np.average(ampl, axis=1)
+
+
+def _group_avg_wt(signals: ndarray, fs: float, *args, **kwargs):
+    out = None
+
+    x, y = signals.shape
+    for index in range(x):
+        avg = avg_wt(signals[index, :], fs, *args, **kwargs)
+
+        if out is None:
+            out = np.empty((x, len(avg)))
+
+        out[index, :] = avg[:]
+
+    return out
+
+
 def group_coherence(
+    signals_a: ndarray,
+    signals_b: ndarray,
+    fs: float,
+    max_surrogates: int = None,
+    *wavelet_args,
+    **wavelet_kwargs,
+) -> ndarray:
+    """
+    Group coherence algorithm.
+
+    :param signals_a:
+    :param signals_b:
+    :param fs:
+    :param max_surrogates:
+    :return: # TODO
+    """
+    try:
+        xa, ya = signals_a.shape
+        xb, yb = signals_a.shape
+    except ValueError:
+        raise CoherenceException(
+            f"Cannot perform group coherence with only one pair of signals."
+        )
+
+    if xa > ya:
+        warnings.warn(
+            f"Array dimensions {xa}, {ya} imply that the signals may be orientated incorrectly in the input arrays. "
+            f"If this is not the case, please ignore the warning.",
+            RuntimeWarning,
+        )
+
+    wt_a = avg_wt(signals_a[0, :], fs)
+    wt_b = avg_wt(signals_b[0, :], fs)
+
+    wavelet_transforms_a = np.empty((xa, len(wt_a)))
+    wavelet_transforms_b = np.empty((xb, len(wt_b)))
+
+    indices = np.arange(1, xa)
+
+    processes = multiprocessing.cpu_count() + 1
+    chunks = np.array_split(indices, processes)
+
+    pool = multiprocessing.Pool(processes=processes)
+    args = [(signals_a[chunk[0] : chunk[-1], :], fs,) for chunk in chunks]
+
+    results = pool.starmap(_group_avg_wt, args)
+
+    for chunk, result in zip(chunks, results):
+        start, end = chunk[0], chunk[-1]
+
+        wavelet_transforms_a[start:end, :] = result[:, :]
+        wavelet_transforms_b[start:end, :] = result[:, :]
+
+
+def dual_group_coherence(
     group1_signals1: ndarray,
     group1_signals2: ndarray,
     group2_signals1: ndarray,
@@ -44,7 +125,6 @@ def group_coherence(
     :param max_surrogates:
     :return:
     """
-
     try:
         x1a, y1a = group1_signals1.shape
         x1b, y1b = group1_signals2.shape
@@ -73,7 +153,7 @@ def group_coherence(
     recommended_surr = 19
     surr = y1b
 
-    if max_surrogates < 19:
+    if max_surrogates < recommended_surr:
         warnings.warn(
             f"Low number of surrogates: {max_surrogates}. A larger number of surrogates is recommended.",
             RuntimeWarning,
