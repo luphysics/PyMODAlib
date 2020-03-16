@@ -20,7 +20,7 @@ from typing import Any, Tuple
 import numpy as np
 from numpy import ndarray
 
-from algorithms.coherence import wavelet_phase_coherence
+from pymodalib.algorithms.coherence import wavelet_phase_coherence
 from pymodalib.algorithms.wavelet import wavelet_transform
 
 
