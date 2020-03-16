@@ -17,7 +17,7 @@ import random
 
 import numpy as np
 
-from pymodalib.algorithms.group_coherence import group_coherence
+from pymodalib.algorithms.group_coherence import dual_group_coherence
 
 
 def generate_signal(times):
@@ -41,7 +41,12 @@ if __name__ == "__main__":
 
     num_signals = 20
 
-    signals_a = np.asarray([generate_signal(times) for _ in range(num_signals)])
-    signals_b = np.asarray([generate_signal(times) for _ in range(num_signals)])
+    group1_signals_a = np.asarray([generate_signal(times) for _ in range(num_signals)])
+    group1_signals_b = np.asarray([generate_signal(times) for _ in range(num_signals)])
 
-    result = group_coherence(signals_a, signals_b, fs)
+    group2_signals_a = np.asarray([generate_signal(times) for _ in range(num_signals)])
+    group2_signals_b = np.asarray([generate_signal(times) for _ in range(num_signals)])
+
+    result = dual_group_coherence(
+        group1_signals_a, group1_signals_b, group2_signals_a, group2_signals_b, fs
+    )

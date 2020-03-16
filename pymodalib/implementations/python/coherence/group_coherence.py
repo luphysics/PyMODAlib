@@ -15,7 +15,7 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 import multiprocessing
 import warnings
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 from numpy import ndarray
@@ -33,19 +33,23 @@ def wt(signal: ndarray, fs: float, *args, **kwargs):
     return wt, freq
 
 
-def _group_wt(signals: ndarray, fs: float, *args, **kwargs):
-    out = None
+def _chunk_wt(signals_a: ndarray, signals_b: ndarray, fs: float, *args, **kwargs):
+    out_a = None
+    out_b = None
 
-    x, y = signals.shape
+    x, y = signals_a.shape
     for index in range(x):
-        _wt, _ = wt(signals[index, :], fs, *args, **kwargs)
+        _wt_a, _ = wt(signals_a[index, :], fs, *args, **kwargs)
+        _wt_b, _ = wt(signals_b[index, :], fs, *args, **kwargs)
 
-        if out is None:
-            out = np.empty((x, *_wt.shape), dtype=np.complex64)
+        if out_a is None:
+            out_a = np.empty((x, *_wt_a.shape), dtype=np.complex64)
+            out_b = np.empty(out_a.shape, dtype=np.complex64)
 
-        out[index, :, :] = _wt[:, :]
+        out_a[index, :, :] = _wt_a[:, :]
+        out_b[index, :, :] = _wt_b[:, :]
 
-    return out
+    return out_a, out_b
 
 
 def _group_coherence(wavelet_transforms_a: ndarray, wavelet_transforms_b: ndarray):
@@ -67,9 +71,12 @@ def group_coherence(
     max_surrogates: int = None,
     *wavelet_args,
     **wavelet_kwargs,
-) -> ndarray:
+) -> Tuple[Any, ndarray, ndarray, ndarray]:
     """
-    Group coherence algorithm.
+    Group coherence algorithm. Calculates coherences for a single group, which contains a
+    signal A and a signal B for each member.
+
+    Performs inter-subject surrogates.
 
     :param signals_a:
     :param signals_b:
@@ -92,47 +99,56 @@ def group_coherence(
             RuntimeWarning,
         )
 
+    # Create Pool for multiprocessing.
     processes = multiprocessing.cpu_count() + 1
     pool = multiprocessing.Pool(processes=processes)
 
-    # Calculate the first two wavelet transforms, so that we know their dimensions.
+    # Calculate the first two wavelet transforms, so we know their dimensions.
     args = [(signals_a[0, :], fs), (signals_b[0, :], fs)]
-    (wt_a, _), (wt_b, _) = pool.starmap(wt, args)
+    (wt_a, freq), (wt_b, _) = pool.starmap(wt, args)
 
-    # Create empty arrays for all wavelet transforms.
+    # Create empty arrays to hold all wavelet transforms.
     wavelet_transforms_a = np.empty((xa, *wt_a.shape), dtype=np.complex64)
     wavelet_transforms_b = np.empty((xb, *wt_b.shape), dtype=np.complex64)
 
-    # Calculate how the signals will be split up,
-    # so each process can work on part of the group.
+    # Calculate how the signals will be split up, so each process can work on part of the group.
     indices = np.arange(1, xa)
     chunks = np.array_split(indices, processes)
 
+    args = []
+    for c in chunks:
+        start, end = c[0], c[-1]
+
+        args.append((signals_a[start:end, :], signals_b[start:end, :], fs))
+
     # Calculate wavelet transforms in parallel.
-    args = [(signals_a[chunk[0] : chunk[-1], :], fs,) for chunk in chunks]
-    results = pool.starmap(_group_wt, args)
+    results = pool.starmap(_chunk_wt, args)
 
     # Write the results from processes into the arrays containing the wavelet transforms.
-    for chunk, result in zip(chunks, results):
+    for chunk, (result1, result2) in zip(chunks, results):
         start, end = chunk[0], chunk[-1]
 
-        wavelet_transforms_a[start:end, :, :] = result[:, :, :]
-        wavelet_transforms_b[start:end, :, :] = result[:, :, :]
+        wavelet_transforms_a[start:end, :, :] = result1[:, :, :]
+        wavelet_transforms_b[start:end, :, :] = result2[:, :, :]
 
     """
     Now we have the wavelet transform for every signal in the group.
     
     Next, we want to calculate the coherence between every signal A and B. 
+    The coherences between unrelated signals (e.g. signal A1 and signal B2)
+    will be used as surrogates.
     
-    The group will have an array like the following, where the empty items 
-    contain the coherence between their associated signal A and B:
+    The group will have a coherence array like the following, where the cells marked 
+    with "C" are the coherences between the signals for each subject in the group,
+    and the cells marked with "s" are the surrogates created by calculating the 
+    coherence between unrelated signals.
     
-                |  sig_a_1  |  sig_a_2  |  sig_a_3  | ..... |
-    | --------- | --------- | --------- | --------- | ----- |
-    |  sig_b_1  |           |           |           |       |
-    |  sig_b_2  |           |           |           |       |
-    |  sig_b_3  |           |           |           |       |
-    |  .......  |           |           |           |       |
+                |  sig_b_1  |  sig_b_2  |  sig_b_3  |  .....  |
+    | --------- | --------- | --------- | --------- |  -----  |
+    |  sig_a_1  |     C     |     s     |     s     |    s    |
+    |  sig_a_2  |     s     |     C     |     s     |    s    |
+    |  sig_a_3  |     s     |     s     |     C     |    s    |
+    |   .....   |     s     |     s     |     s     |    C    |
     """
 
     # Create empty array for coherence.
@@ -145,14 +161,17 @@ def group_coherence(
     for c in chunks:
         start, end = c[0], c[-1]
 
-        # Only split up rows. Keep columns the same.
+        # Split up into chunks by rows.
         wavelets_a = wavelet_transforms_a[start:end, :, :]
+
+        # Keep all columns instead of splitting into chunks.
         wavelets_b = wavelet_transforms_b[:, :, :]
 
         args.append((wavelets_a, wavelets_b))
 
     results = pool.starmap(_group_coherence, args)
 
+    # Write the results from processes into the coherence array.
     for chunk, result in zip(chunks, results):
         start, end = chunk[0], chunk[-1]
 
@@ -165,12 +184,31 @@ def group_coherence(
     surrogates.
     """
 
+    surr_count = xa ** 2 - xa
+
+    # Indices along the diagonal of the coherence array.
+    # These correspond to the useful coherences.
+    diag = np.diag_indices(xa)
+
+    real_coherences = coherence[diag]
+
+    # Set the coherences to NaN, so we're left with the surrogates only.
+    coherence[diag] = np.NaN
+
+    # Calculate mean, median and standard deviation.
+    mean = np.nanmean(coherence, axis=(0, 1,))
+    median = np.nanmedian(coherence, axis=(0, 1,))
+    std = np.nanstd(coherence, axis=(0, 1,))
+
+    return freq, mean, median, std
+
 
 def dual_group_coherence(
     group1_signals1: ndarray,
     group1_signals2: ndarray,
     group2_signals1: ndarray,
     group2_signals2: ndarray,
+    fs: float,
     percentile: float = 95,
     max_surrogates: int = None,
     *wavelet_args,
@@ -183,6 +221,7 @@ def dual_group_coherence(
     :param group1_signals2:
     :param group2_signals1:
     :param group2_signals2:
+    :param fs:
     :param percentile:
     :param max_surrogates:
     :return:
@@ -215,20 +254,17 @@ def dual_group_coherence(
     recommended_surr = 19
     surr = y1b
 
-    if max_surrogates < recommended_surr:
+    if max_surrogates and max_surrogates < recommended_surr:
         warnings.warn(
             f"Low number of surrogates: {max_surrogates}. A larger number of surrogates is recommended.",
             RuntimeWarning,
         )
 
-    """
-    Create array containing wavelet transforms.
-    """
-    group1_wt1 = None
-    group1_wt2 = None
-    group2_wt1 = None
-    group2_wt2 = None
+    freq, mean1, median1, std1 = group_coherence(
+        group1_signals1, group1_signals2, fs, *wavelet_args, **wavelet_kwargs
+    )
+    freq, mean2, median1, std1 = group_coherence(
+        group1_signals1, group1_signals2, fs, *wavelet_args, **wavelet_kwargs
+    )
 
-    """
-    Create array containing 
-    """
+    # TODO: return values
