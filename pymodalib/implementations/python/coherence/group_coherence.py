@@ -17,8 +17,8 @@ import multiprocessing
 import warnings
 from typing import Any
 
-from numpy import ndarray
 import numpy as np
+from numpy import ndarray
 
 from pymodalib.algorithms.wavelet import wavelet_transform
 
@@ -81,20 +81,19 @@ def group_coherence(
             RuntimeWarning,
         )
 
-    wt_a = avg_wt(signals_a[0, :], fs)
-    wt_b = avg_wt(signals_b[0, :], fs)
+    processes = multiprocessing.cpu_count() + 1
+    pool = multiprocessing.Pool(processes=processes)
+
+    args = [(signals_a[0, :], fs), (signals_b[0, :], fs)]
+    wt_a, wt_b = pool.starmap(avg_wt, args)
 
     wavelet_transforms_a = np.empty((xa, len(wt_a)))
     wavelet_transforms_b = np.empty((xb, len(wt_b)))
 
     indices = np.arange(1, xa)
-
-    processes = multiprocessing.cpu_count() + 1
     chunks = np.array_split(indices, processes)
 
-    pool = multiprocessing.Pool(processes=processes)
     args = [(signals_a[chunk[0] : chunk[-1], :], fs,) for chunk in chunks]
-
     results = pool.starmap(_group_avg_wt, args)
 
     for chunk, result in zip(chunks, results):
