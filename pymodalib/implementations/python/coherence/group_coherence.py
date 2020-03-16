@@ -20,6 +20,7 @@ from typing import Any
 import numpy as np
 from numpy import ndarray
 
+from algorithms.coherence import wavelet_phase_coherence
 from pymodalib.algorithms.wavelet import wavelet_transform
 
 
@@ -27,24 +28,34 @@ class CoherenceException(Exception):
     pass
 
 
-def avg_wt(signal: ndarray, fs: float, *args, **kwargs):
+def wt(signal: ndarray, fs: float, *args, **kwargs):
     wt, freq = wavelet_transform(signal, fs, *args, **kwargs)
-
-    ampl = np.abs(wt)
-    return np.average(ampl, axis=1)
+    return wt, freq
 
 
-def _group_avg_wt(signals: ndarray, fs: float, *args, **kwargs):
+def _group_wt(signals: ndarray, fs: float, *args, **kwargs):
     out = None
 
     x, y = signals.shape
     for index in range(x):
-        avg = avg_wt(signals[index, :], fs, *args, **kwargs)
+        _wt, _ = wt(signals[index, :], fs, *args, **kwargs)
 
         if out is None:
-            out = np.empty((x, len(avg)))
+            out = np.empty((x, *_wt.shape), dtype=np.complex64)
 
-        out[index, :] = avg[:]
+        out[index, :, :] = _wt[:, :]
+
+    return out
+
+
+def _group_coherence(wavelet_transforms_a: ndarray, wavelet_transforms_b: ndarray):
+    coh_length = wavelet_transforms_a.shape[1]
+    out = np.empty((len(wavelet_transforms_a), len(wavelet_transforms_b), coh_length))
+
+    for i, wt1 in enumerate(wavelet_transforms_a):
+        for j, wt2 in enumerate(wavelet_transforms_b):
+            coh, _ = wavelet_phase_coherence(wt1, wt2)
+            out[i, j, :] = np.average(coh, axis=1)
 
     return out
 
@@ -84,23 +95,75 @@ def group_coherence(
     processes = multiprocessing.cpu_count() + 1
     pool = multiprocessing.Pool(processes=processes)
 
+    # Calculate the first two wavelet transforms, so that we know their dimensions.
     args = [(signals_a[0, :], fs), (signals_b[0, :], fs)]
-    wt_a, wt_b = pool.starmap(avg_wt, args)
+    (wt_a, _), (wt_b, _) = pool.starmap(wt, args)
 
-    wavelet_transforms_a = np.empty((xa, len(wt_a)))
-    wavelet_transforms_b = np.empty((xb, len(wt_b)))
+    # Create empty arrays for all wavelet transforms.
+    wavelet_transforms_a = np.empty((xa, *wt_a.shape), dtype=np.complex64)
+    wavelet_transforms_b = np.empty((xb, *wt_b.shape), dtype=np.complex64)
 
+    # Calculate how the signals will be split up,
+    # so each process can work on part of the group.
     indices = np.arange(1, xa)
     chunks = np.array_split(indices, processes)
 
+    # Calculate wavelet transforms in parallel.
     args = [(signals_a[chunk[0] : chunk[-1], :], fs,) for chunk in chunks]
-    results = pool.starmap(_group_avg_wt, args)
+    results = pool.starmap(_group_wt, args)
+
+    # Write the results from processes into the arrays containing the wavelet transforms.
+    for chunk, result in zip(chunks, results):
+        start, end = chunk[0], chunk[-1]
+
+        wavelet_transforms_a[start:end, :, :] = result[:, :, :]
+        wavelet_transforms_b[start:end, :, :] = result[:, :, :]
+
+    """
+    Now we have the wavelet transform for every signal in the group.
+    
+    Next, we want to calculate the coherence between every signal A and B. 
+    
+    The group will have an array like the following, where the empty items 
+    contain the coherence between their associated signal A and B:
+    
+                |  sig_a_1  |  sig_a_2  |  sig_a_3  | ..... |
+    | --------- | --------- | --------- | --------- | ----- |
+    |  sig_b_1  |           |           |           |       |
+    |  sig_b_2  |           |           |           |       |
+    |  sig_b_3  |           |           |           |       |
+    |  .......  |           |           |           |       |
+    """
+
+    # Create empty array for coherence.
+    coherence = np.empty((xa, *wavelet_transforms_a.shape[:-1]))
+
+    indices = np.arange(0, coherence.shape[0])
+    chunks = np.array_split(indices, processes)
+
+    args = []
+    for c in chunks:
+        start, end = c[0], c[-1]
+
+        # Only split up rows. Keep columns the same.
+        wavelets_a = wavelet_transforms_a[start:end, :, :]
+        wavelets_b = wavelet_transforms_b[:, :, :]
+
+        args.append((wavelets_a, wavelets_b))
+
+    results = pool.starmap(_group_coherence, args)
 
     for chunk, result in zip(chunks, results):
         start, end = chunk[0], chunk[-1]
 
-        wavelet_transforms_a[start:end, :] = result[:, :]
-        wavelet_transforms_b[start:end, :] = result[:, :]
+        coherence[start:end, :] = result[:, :]
+
+    """
+    Now we have a large array containing the coherence between all signals.
+    
+    The values on the diagonal are the useful coherences; the other values are
+    surrogates.
+    """
 
 
 def dual_group_coherence(

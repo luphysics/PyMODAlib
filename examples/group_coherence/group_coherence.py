@@ -27,10 +27,21 @@ def generate_signal(times):
 
 
 if __name__ == "__main__":
+    import os
+
+    os.environ["LD_LIBRARY_PATH"] = (
+        "/usr/local/MATLAB/MATLAB_Runtime/v96/runtime/glnxa64:"
+        "/usr/local/MATLAB/MATLAB_Runtime/v96/bin/glnxa64:"
+        "/usr/local/MATLAB/MATLAB_Runtime/v96/sys/os/glnxa64:"
+        "/usr/local/MATLAB/MATLAB_Runtime/v96/extern/bin/glnxa64"
+    )
+
     fs = 10
     times = np.arange(0, 1000 / fs, 1 / fs)
 
-    signals_a = np.asarray([generate_signal(times) for _ in range(50)])
-    signals_b = np.asarray([generate_signal(times) for _ in range(50)])
+    num_signals = 20
+
+    signals_a = np.asarray([generate_signal(times) for _ in range(num_signals)])
+    signals_b = np.asarray([generate_signal(times) for _ in range(num_signals)])
 
     result = group_coherence(signals_a, signals_b, fs)
