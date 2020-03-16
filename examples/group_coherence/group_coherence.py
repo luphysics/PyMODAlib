@@ -16,6 +16,7 @@
 import random
 
 import numpy as np
+from matplotlib import pyplot
 
 from pymodalib.algorithms.group_coherence import dual_group_coherence
 
@@ -47,6 +48,11 @@ if __name__ == "__main__":
     group2_signals_a = np.asarray([generate_signal(times) for _ in range(num_signals)])
     group2_signals_b = np.asarray([generate_signal(times) for _ in range(num_signals)])
 
-    result = dual_group_coherence(
+    freq, coh1, mean1, median1, std1, coh2, mean2, median2, std2 = dual_group_coherence(
         group1_signals_a, group1_signals_b, group2_signals_a, group2_signals_b, fs
     )
+
+    pyplot.plot(freq, coh1)
+    pyplot.plot(freq, mean1)
+
+    pyplot.show()

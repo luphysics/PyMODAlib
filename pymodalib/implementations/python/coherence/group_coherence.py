@@ -71,7 +71,7 @@ def group_coherence(
     max_surrogates: int = None,
     *wavelet_args,
     **wavelet_kwargs,
-) -> Tuple[Any, ndarray, ndarray, ndarray]:
+) -> Tuple[Any, ndarray, ndarray, ndarray, ndarray]:
     """
     Group coherence algorithm. Calculates coherences for a single group, which contains a
     signal A and a signal B for each member.
@@ -195,12 +195,14 @@ def group_coherence(
     # Set the coherences to NaN, so we're left with the surrogates only.
     coherence[diag] = np.NaN
 
-    # Calculate mean, median and standard deviation.
-    mean = np.nanmean(coherence, axis=(0, 1,))
-    median = np.nanmedian(coherence, axis=(0, 1,))
-    std = np.nanstd(coherence, axis=(0, 1,))
+    mean = np.nanmean(real_coherences, axis=0)
 
-    return freq, mean, median, std
+    # Calculate mean, median and standard deviation.
+    surr_mean = np.nanmean(coherence, axis=(0, 1,))
+    surr_median = np.nanmedian(coherence, axis=(0, 1,))
+    surr_std = np.nanstd(coherence, axis=(0, 1,))
+
+    return freq, mean, surr_mean, surr_median, surr_std
 
 
 def dual_group_coherence(
@@ -260,11 +262,11 @@ def dual_group_coherence(
             RuntimeWarning,
         )
 
-    freq, mean1, median1, std1 = group_coherence(
+    freq, coh1, mean1, median1, std1 = group_coherence(
         group1_signals1, group1_signals2, fs, *wavelet_args, **wavelet_kwargs
     )
-    freq, mean2, median1, std1 = group_coherence(
+    freq, coh2, mean2, median2, std2 = group_coherence(
         group1_signals1, group1_signals2, fs, *wavelet_args, **wavelet_kwargs
     )
 
-    # TODO: return values
+    return freq, coh1, mean1, median1, std1, coh2, mean2, median2, std2
