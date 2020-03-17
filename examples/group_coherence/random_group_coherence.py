@@ -54,7 +54,7 @@ if __name__ == "__main__":
         group1_signals_a, group1_signals_b, group2_signals_a, group2_signals_b, fs
     )
 
-    freq, coh1, _, coh2 = results
+    freq, coh1, surr1, _, coh2, surr2 = results
 
     mean1 = np.nanmean(coh1, axis=0)
     mean2 = np.nanmean(coh2, axis=0)

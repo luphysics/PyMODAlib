@@ -46,10 +46,16 @@ def _chunk_wt(signals_a: ndarray, signals_b: ndarray, fs: float, *args, **kwargs
 
         if out_a is None:
             out_a = np.memmap(
-                f"{uuid.uuid4()}.dat", dtype=np.complex64, shape=(x, *_wt_a.shape)
+                f"{uuid.uuid4()}.dat",
+                dtype=np.complex64,
+                shape=(x, *_wt_a.shape),
+                mode="w+",
             )
             out_b = np.memmap(
-                f"{uuid.uuid4()}.dat", dtype=np.complex64, shape=(x, *_wt_a.shape)
+                f"{uuid.uuid4()}.dat",
+                dtype=np.complex64,
+                shape=(x, *_wt_a.shape),
+                mode="w+",
             )
 
             # out_a = np.empty((x, *_wt_a.shape), dtype=np.complex64)
@@ -120,10 +126,10 @@ def group_coherence(
 
     # Create empty arrays to hold all wavelet transforms.
     wavelet_transforms_a = np.memmap(
-        f"{uuid.uuid4()}.dat", shape=(xa, *wt_a.shape), dtype=np.complex64
+        f"{uuid.uuid4()}.dat", shape=(xa, *wt_a.shape), dtype=np.complex64, mode="w+"
     )
     wavelet_transforms_b = np.memmap(
-        f"{uuid.uuid4()}.dat", shape=(xb, *wt_b.shape), dtype=np.complex64
+        f"{uuid.uuid4()}.dat", shape=(xb, *wt_b.shape), dtype=np.complex64, mode="w+"
     )
 
     # Calculate how the signals will be split up, so each process can work on part of the group.
