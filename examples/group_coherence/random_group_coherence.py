@@ -29,13 +29,15 @@ def generate_signal(times):
 
 if __name__ == "__main__":
     import os
+    import platform
 
-    os.environ["LD_LIBRARY_PATH"] = (
-        "/usr/local/MATLAB/MATLAB_Runtime/v96/runtime/glnxa64:"
-        "/usr/local/MATLAB/MATLAB_Runtime/v96/bin/glnxa64:"
-        "/usr/local/MATLAB/MATLAB_Runtime/v96/sys/os/glnxa64:"
-        "/usr/local/MATLAB/MATLAB_Runtime/v96/extern/bin/glnxa64"
-    )
+    if platform.system() == "Linux":
+        os.environ["LD_LIBRARY_PATH"] = (
+            "/usr/local/MATLAB/MATLAB_Runtime/v96/runtime/glnxa64:"
+            "/usr/local/MATLAB/MATLAB_Runtime/v96/bin/glnxa64:"
+            "/usr/local/MATLAB/MATLAB_Runtime/v96/sys/os/glnxa64:"
+            "/usr/local/MATLAB/MATLAB_Runtime/v96/extern/bin/glnxa64"
+        )
 
     fs = 10
     times = np.arange(0, 1000 / fs, 1 / fs)
@@ -48,13 +50,17 @@ if __name__ == "__main__":
     group2_signals_a = np.asarray([generate_signal(times) for _ in range(num_signals)])
     group2_signals_b = np.asarray([generate_signal(times) for _ in range(num_signals)])
 
-    freq, coh1, mean1, median1, std1, coh2, mean2, median2, std2 = dual_group_coherence(
+    results = dual_group_coherence(
         group1_signals_a, group1_signals_b, group2_signals_a, group2_signals_b, fs
     )
 
-    pyplot.plot(freq, coh1)
+    freq, coh1, _, coh2 = results
+
+    mean1 = np.nanmean(coh1, axis=0)
+    mean2 = np.nanmean(coh2, axis=0)
+
     pyplot.plot(freq, mean1)
+    pyplot.plot(freq, mean2)
 
-    pyplot.legend(["Mean coherence (group 1)", "Mean surrogates (group 1)"])
-
+    pyplot.legend(["Mean coherence (group 1)", "Mean coherence (group 2)"])
     pyplot.show()

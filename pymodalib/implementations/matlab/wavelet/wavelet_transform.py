@@ -35,6 +35,8 @@ def wavelet_transform(
     padding: str = "predictive",
     fstep: str = "auto",
     rel_tolerance: float = 0.01,
+    *args,
+    **kwargs,
 ) -> Tuple[ndarray, ndarray, Dict]:
     """
     MATLAB implementation of the wavelet transform.
@@ -52,6 +54,7 @@ def wavelet_transform(
             "Wavelet": wavelet,
             "Preprocess": "on" if preprocess else "off",
             "python": True,
+            **kwargs,
         }
     )
 

@@ -30,7 +30,7 @@ class CoherenceException(Exception):
 
 
 def wt(signal: ndarray, fs: float, *args, **kwargs):
-    wt, freq = wavelet_transform(signal, fs, *args, **kwargs)
+    wt, freq = wavelet_transform(signal, fs, *args, **kwargs, Display="off")
     return wt, freq
 
 
@@ -72,7 +72,7 @@ def group_coherence(
     max_surrogates: int = None,
     *wavelet_args,
     **wavelet_kwargs,
-) -> Tuple[Any, ndarray, ndarray, ndarray, ndarray]:
+) -> Tuple[ndarray, ndarray, ndarray]:
     """
     Group coherence algorithm. Calculates coherences for a single group, which contains a
     signal A and a signal B for each member.
@@ -101,7 +101,7 @@ def group_coherence(
         )
 
     # Create Pool for multiprocessing.
-    processes = multiprocessing.cpu_count() + 1
+    processes = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes=processes)
 
     # Calculate the first two wavelet transforms, so we know their dimensions.
@@ -193,25 +193,21 @@ def group_coherence(
     surrogates.
     """
 
-    surr_count = xa ** 2 - xa
-
     # Indices along the diagonal of the coherence array.
     # These correspond to the useful coherences.
     diag = np.diag_indices(xa)
-
     real_coherences = coherence[diag]
 
     # Set the coherences to NaN, so we're left with the surrogates only.
     coherence[diag] = np.NaN
+    surrogates = coherence
 
-    mean = np.nanmean(real_coherences, axis=0)
+    surr_percentile = np.nanpercentile(surrogates, 95, axis=(0, 1,))
 
-    # Calculate mean, median and standard deviation.
-    surr_mean = np.nanmean(coherence, axis=(0, 1,))
-    surr_median = np.nanmedian(coherence, axis=(0, 1,))
-    surr_std = np.nanstd(coherence, axis=(0, 1,))
+    residual_coherence = real_coherences - surr_percentile
+    residual_coherence[residual_coherence < 0] = 0
 
-    return freq, mean, surr_mean, surr_median, surr_std
+    return freq, residual_coherence, surr_percentile
 
 
 def dual_group_coherence(
@@ -271,11 +267,11 @@ def dual_group_coherence(
             RuntimeWarning,
         )
 
-    freq, coh1, mean1, median1, std1 = group_coherence(
+    result1 = group_coherence(
         group1_signals1, group1_signals2, fs, *wavelet_args, **wavelet_kwargs
     )
-    freq, coh2, mean2, median2, std2 = group_coherence(
+    result2 = group_coherence(
         group1_signals1, group1_signals2, fs, *wavelet_args, **wavelet_kwargs
     )
 
-    return freq, coh1, mean1, median1, std1, coh2, mean2, median2, std2
+    return (*result1, *result2)
