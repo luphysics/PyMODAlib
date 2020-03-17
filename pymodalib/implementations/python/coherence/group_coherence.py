@@ -22,6 +22,7 @@ from numpy import ndarray
 
 from pymodalib.algorithms.coherence import wavelet_phase_coherence
 from pymodalib.algorithms.wavelet import wavelet_transform
+from pymodalib.utils.chunks import array_split
 
 
 class CoherenceException(Exception):
@@ -113,11 +114,13 @@ def group_coherence(
 
     # Calculate how the signals will be split up, so each process can work on part of the group.
     indices = np.arange(1, xa)
-    chunks = np.array_split(indices, processes)
+    chunks = array_split(indices, processes)
 
     args = []
     for c in chunks:
         start, end = c[0], c[-1]
+        if start == end:
+            end += 1
 
         args.append((signals_a[start:end, :], signals_b[start:end, :], fs))
 
@@ -127,6 +130,8 @@ def group_coherence(
     # Write the results from processes into the arrays containing the wavelet transforms.
     for chunk, (result1, result2) in zip(chunks, results):
         start, end = chunk[0], chunk[-1]
+        if start == end:
+            end += 1
 
         wavelet_transforms_a[start:end, :, :] = result1[:, :, :]
         wavelet_transforms_b[start:end, :, :] = result2[:, :, :]
@@ -155,11 +160,13 @@ def group_coherence(
     coherence = np.empty((xa, *wavelet_transforms_a.shape[:-1]))
 
     indices = np.arange(0, coherence.shape[0])
-    chunks = np.array_split(indices, processes)
+    chunks = array_split(indices, processes)
 
     args = []
     for c in chunks:
         start, end = c[0], c[-1]
+        if start == end:
+            end += 1
 
         # Split up into chunks by rows.
         wavelets_a = wavelet_transforms_a[start:end, :, :]
@@ -174,6 +181,8 @@ def group_coherence(
     # Write the results from processes into the coherence array.
     for chunk, result in zip(chunks, results):
         start, end = chunk[0], chunk[-1]
+        if start == end:
+            end += 1
 
         coherence[start:end, :] = result[:, :]
 
