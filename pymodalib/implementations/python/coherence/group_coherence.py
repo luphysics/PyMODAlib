@@ -14,6 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 import multiprocessing
+import uuid
 import warnings
 from typing import Any, Tuple
 
@@ -44,8 +45,15 @@ def _chunk_wt(signals_a: ndarray, signals_b: ndarray, fs: float, *args, **kwargs
         _wt_b, _ = wt(signals_b[index, :], fs, *args, **kwargs)
 
         if out_a is None:
-            out_a = np.empty((x, *_wt_a.shape), dtype=np.complex64)
-            out_b = np.empty(out_a.shape, dtype=np.complex64)
+            out_a = np.memmap(
+                f"{uuid.uuid4()}.dat", dtype=np.complex64, shape=(x, *_wt_a.shape)
+            )
+            out_b = np.memmap(
+                f"{uuid.uuid4()}.dat", dtype=np.complex64, shape=(x, *_wt_a.shape)
+            )
+
+            # out_a = np.empty((x, *_wt_a.shape), dtype=np.complex64)
+            # out_b = np.empty(out_a.shape, dtype=np.complex64)
 
         out_a[index, :, :] = _wt_a[:, :]
         out_b[index, :, :] = _wt_b[:, :]
@@ -106,11 +114,17 @@ def group_coherence(
 
     # Calculate the first two wavelet transforms, so we know their dimensions.
     args = [(signals_a[0, :], fs), (signals_b[0, :], fs)]
+
     (wt_a, freq), (wt_b, _) = pool.starmap(wt, args)
+    print(f"Finished calculating first pair of wavelet transforms.")
 
     # Create empty arrays to hold all wavelet transforms.
-    wavelet_transforms_a = np.empty((xa, *wt_a.shape), dtype=np.complex64)
-    wavelet_transforms_b = np.empty((xb, *wt_b.shape), dtype=np.complex64)
+    wavelet_transforms_a = np.memmap(
+        f"{uuid.uuid4()}.dat", shape=(xa, *wt_a.shape), dtype=np.complex64
+    )
+    wavelet_transforms_b = np.memmap(
+        f"{uuid.uuid4()}.dat", shape=(xb, *wt_b.shape), dtype=np.complex64
+    )
 
     # Calculate how the signals will be split up, so each process can work on part of the group.
     indices = np.arange(1, xa)
@@ -126,6 +140,7 @@ def group_coherence(
 
     # Calculate wavelet transforms in parallel.
     results = pool.starmap(_chunk_wt, args)
+    print(f"Finished calculating wavelet transforms.")
 
     # Write the results from processes into the arrays containing the wavelet transforms.
     for chunk, (result1, result2) in zip(chunks, results):
@@ -177,6 +192,7 @@ def group_coherence(
         args.append((wavelets_a, wavelets_b))
 
     results = pool.starmap(_group_coherence, args)
+    print(f"Finished calculating coherence.")
 
     # Write the results from processes into the coherence array.
     for chunk, result in zip(chunks, results):
