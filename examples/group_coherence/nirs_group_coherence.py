@@ -13,18 +13,34 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
-import random
+
+"""
+This is for testing the group coherence algorithm with known data.
+The data are not supplied as part of PyMODAlib.
+"""
 
 import numpy as np
+import scipy.io
 from matplotlib import pyplot
+from numpy import ndarray
 
 from pymodalib.algorithms.group_coherence import dual_group_coherence
 
+fs = 31.25
 
-def generate_signal(times):
-    f = random.randint(1, 10)
+# 15 minutes.
+sig_length = int(fs * 60 * 15)
 
-    return np.sin(f * times)
+
+def load_mat(filename: str) -> ndarray:
+    cell = list(scipy.io.loadmat(filename).values())[3]
+
+    out = np.empty((cell.shape[1], sig_length))
+
+    for index in range(cell.shape[1]):
+        out[index, :] = cell[0, index][0, :sig_length]
+
+    return out
 
 
 if __name__ == "__main__":
@@ -37,16 +53,12 @@ if __name__ == "__main__":
         "/usr/local/MATLAB/MATLAB_Runtime/v96/extern/bin/glnxa64"
     )
 
-    fs = 10
-    times = np.arange(0, 1000 / fs, 1 / fs)
+    times = np.arange(0, sig_length / fs, 1 / fs)
 
-    num_signals = 20
-
-    group1_signals_a = np.asarray([generate_signal(times) for _ in range(num_signals)])
-    group1_signals_b = np.asarray([generate_signal(times) for _ in range(num_signals)])
-
-    group2_signals_a = np.asarray([generate_signal(times) for _ in range(num_signals)])
-    group2_signals_b = np.asarray([generate_signal(times) for _ in range(num_signals)])
+    group1_signals_a = load_mat("Cphd_O2satNIRS11.mat")
+    group1_signals_b = load_mat("Cphd_Respiration_resampl.mat")
+    group2_signals_a = load_mat("phd_O2satNIRS11.mat")
+    group2_signals_b = load_mat("phd_Respiration_resampl.mat")
 
     freq, coh1, mean1, median1, std1, coh2, mean2, median2, std2 = dual_group_coherence(
         group1_signals_a, group1_signals_b, group2_signals_a, group2_signals_b, fs
@@ -54,5 +66,7 @@ if __name__ == "__main__":
 
     pyplot.plot(freq, coh1)
     pyplot.plot(freq, mean1)
+
+    pyplot.legend(["Mean coherence (group 1)", "Mean surrogates (group 1)"])
 
     pyplot.show()

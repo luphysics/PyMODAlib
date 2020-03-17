@@ -4,6 +4,9 @@
 
 examples/**/output.npz
 
+examples/group_coherence/Cphd**
+examples/group_coherence/phd**
+
 # Created by https://www.gitignore.io/api/pycharm,visualstudiocode,vim,python
 # Edit at https://www.gitignore.io/?templates=pycharm,visualstudiocode,vim,python
 
