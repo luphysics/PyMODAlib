@@ -19,6 +19,7 @@ import warnings
 from typing import Any, Tuple
 
 import numpy as np
+import pymodalib
 from numpy import ndarray
 
 from pymodalib.algorithms.coherence import wavelet_phase_coherence
@@ -45,21 +46,8 @@ def _chunk_wt(signals_a: ndarray, signals_b: ndarray, fs: float, *args, **kwargs
         _wt_b, _ = wt(signals_b[index, :], fs, *args, **kwargs)
 
         if out_a is None:
-            out_a = np.memmap(
-                f"{uuid.uuid4()}.dat",
-                dtype=np.complex64,
-                shape=(x, *_wt_a.shape),
-                mode="w+",
-            )
-            out_b = np.memmap(
-                f"{uuid.uuid4()}.dat",
-                dtype=np.complex64,
-                shape=(x, *_wt_a.shape),
-                mode="w+",
-            )
-
-            # out_a = np.empty((x, *_wt_a.shape), dtype=np.complex64)
-            # out_b = np.empty(out_a.shape, dtype=np.complex64)
+            out_a = pymodalib.cachedarray(shape=(x, *_wt_a.shape), dtype=np.complex64)
+            out_b = pymodalib.cachedarray(shape=(x, *_wt_a.shape), dtype=np.complex64)
 
         out_a[index, :, :] = _wt_a[:, :]
         out_b[index, :, :] = _wt_b[:, :]
@@ -125,11 +113,11 @@ def group_coherence(
     print(f"Finished calculating first pair of wavelet transforms.")
 
     # Create empty arrays to hold all wavelet transforms.
-    wavelet_transforms_a = np.memmap(
-        f"{uuid.uuid4()}.dat", shape=(xa, *wt_a.shape), dtype=np.complex64, mode="w+"
+    wavelet_transforms_a = pymodalib.cachedarray(
+        shape=(xa, *wt_a.shape), dtype=np.complex64
     )
-    wavelet_transforms_b = np.memmap(
-        f"{uuid.uuid4()}.dat", shape=(xb, *wt_b.shape), dtype=np.complex64, mode="w+"
+    wavelet_transforms_b = pymodalib.cachedarray(
+        shape=(xb, *wt_b.shape), dtype=np.complex64
     )
 
     # Calculate how the signals will be split up, so each process can work on part of the group.

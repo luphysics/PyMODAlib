@@ -13,3 +13,31 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+import os
+import uuid
+from os.path import join
+from typing import Tuple
+import numpy as np
+from numpy import ndarray
+from pathlib import Path
+
+CACHE_FOLDER = os.environ.get("PYMODALIB_CACHE") or join(f"{Path.home()}", ".pymodalib")
+os.makedirs(CACHE_FOLDER, exist_ok=True)
+
+
+def __generate_name() -> str:
+    return f"{uuid.uuid4()}.dat"
+
+
+def cachedarray(shape: Tuple[int, ...], dtype) -> ndarray:
+    name = __generate_name()
+    while name in os.listdir(CACHE_FOLDER):
+        name = __generate_name()
+
+    filename = join(CACHE_FOLDER, name)
+    return np.memmap(filename, shape=shape, dtype=dtype, mode="w+")
+
+
+def cleanup() -> None:
+    raise NotImplementedError("TODO: cleanup cache directory.")
