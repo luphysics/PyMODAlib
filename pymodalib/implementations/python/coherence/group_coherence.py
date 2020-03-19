@@ -72,6 +72,7 @@ def group_coherence(
     signals_b: ndarray,
     fs: float,
     max_surrogates: int = None,
+    cleanup: bool = True,
     *wavelet_args,
     **wavelet_kwargs,
 ) -> Tuple[ndarray, ndarray, ndarray]:
@@ -214,6 +215,11 @@ def group_coherence(
     residual_coherence = real_coherences - surr_percentile
     residual_coherence[residual_coherence < 0] = 0
 
+    del coherence
+
+    if cleanup:
+        pymodalib.cleanup()
+
     return freq, residual_coherence, surr_percentile
 
 
@@ -275,10 +281,22 @@ def dual_group_coherence(
         )
 
     result1 = group_coherence(
-        group1_signals1, group1_signals2, fs, *wavelet_args, **wavelet_kwargs
+        group1_signals1,
+        group1_signals2,
+        fs,
+        cleanup=False,
+        *wavelet_args,
+        **wavelet_kwargs,
     )
     result2 = group_coherence(
-        group1_signals1, group1_signals2, fs, *wavelet_args, **wavelet_kwargs
+        group2_signals1,
+        group2_signals2,
+        fs,
+        cleanup=False,
+        *wavelet_args,
+        **wavelet_kwargs,
     )
+
+    pymodalib.cleanup()
 
     return (*result1, *result2)

@@ -49,4 +49,9 @@ def cachedarray(shape: Tuple[int, ...], dtype) -> ndarray:
 
 
 def cleanup() -> None:
-    raise NotImplementedError("TODO: cleanup cache directory.")
+    for file in os.listdir(CACHE_FOLDER):
+        if file.endswith(".dat"):
+            try:
+                os.remove(join(CACHE_FOLDER, file))
+            except Exception as e:
+                print(e)

@@ -28,7 +28,7 @@ from pymodalib.algorithms.group_coherence import dual_group_coherence
 
 fs = 31.25
 
-minutes = 5
+minutes = 15
 sig_length = int(fs * 60 * minutes)
 
 
