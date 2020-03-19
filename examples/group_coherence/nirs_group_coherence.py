@@ -28,8 +28,8 @@ from pymodalib.algorithms.group_coherence import dual_group_coherence
 
 fs = 31.25
 
-# 15 minutes.
-sig_length = int(fs * 60 * 15)
+minutes = 5
+sig_length = int(fs * 60 * minutes)
 
 
 def load_mat(filename: str) -> ndarray:
@@ -73,6 +73,9 @@ if __name__ == "__main__":
 
     pyplot.plot(freq, mean1)
     pyplot.plot(freq, mean2)
+
+    pyplot.xlabel("Frequency (Hz)")
+    pyplot.ylabel("Coherence")
 
     pyplot.legend(["Mean coherence (group 1)", "Mean coherence (group 2)"])
     pyplot.show()

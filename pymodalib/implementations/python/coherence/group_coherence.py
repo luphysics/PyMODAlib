@@ -138,9 +138,7 @@ def group_coherence(
 
     # Write the results from processes into the arrays containing the wavelet transforms.
     for chunk, (result1, result2) in zip(chunks, results):
-        start, end = chunk[0], chunk[-1]
-        if start == end:
-            end += 1
+        start, end = chunk[0], chunk[-1] + 1
 
         wavelet_transforms_a[start:end, :, :] = result1[:, :, :]
         wavelet_transforms_b[start:end, :, :] = result2[:, :, :]
@@ -173,9 +171,7 @@ def group_coherence(
 
     args = []
     for c in chunks:
-        start, end = c[0], c[-1]
-        if start == end:
-            end += 1
+        start, end = c[0], c[-1] + 1
 
         # Split up into chunks by rows.
         wavelets_a = wavelet_transforms_a[start:end, :, :]
@@ -185,14 +181,15 @@ def group_coherence(
 
         args.append((wavelets_a, wavelets_b))
 
+    del wavelet_transforms_a
+    del wavelet_transforms_b
+
     results = pool.starmap(_group_coherence, args)
     print(f"Finished calculating coherence.")
 
     # Write the results from processes into the coherence array.
     for chunk, result in zip(chunks, results):
-        start, end = chunk[0], chunk[-1]
-        if start == end:
-            end += 1
+        start, end = chunk[0], chunk[-1] + 1
 
         coherence[start:end, :] = result[:, :]
 

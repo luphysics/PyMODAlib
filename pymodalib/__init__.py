@@ -16,6 +16,7 @@
 
 import os
 import uuid
+import warnings
 from os.path import join
 from typing import Tuple
 import numpy as np
@@ -25,12 +26,20 @@ from pathlib import Path
 CACHE_FOLDER = os.environ.get("PYMODALIB_CACHE") or join(f"{Path.home()}", ".pymodalib")
 os.makedirs(CACHE_FOLDER, exist_ok=True)
 
+ssd_warning = (
+    f"The cache folder is located at {CACHE_FOLDER}. It is highly recommended that you ensure the "
+    f"cache folder is not located on an SSD. For more information, please see the developer guide."
+)
+warnings.filterwarnings("once", "The cache folder is located at")
+
 
 def __generate_name() -> str:
     return f"{uuid.uuid4()}.dat"
 
 
 def cachedarray(shape: Tuple[int, ...], dtype) -> ndarray:
+    warnings.warn(ssd_warning, ResourceWarning)
+
     name = __generate_name()
     while name in os.listdir(CACHE_FOLDER):
         name = __generate_name()
