@@ -21,7 +21,7 @@ The data are not supplied as part of PyMODAlib.
 
 import numpy as np
 import scipy.io
-from matplotlib import pyplot
+from matplotlib import pyplot as plt
 from numpy import ndarray
 
 from pymodalib.algorithms.group_coherence import dual_group_coherence
@@ -29,6 +29,7 @@ from pymodalib.algorithms.group_coherence import dual_group_coherence
 fs = 31.25
 
 minutes = 15
+# minutes = 1
 sig_length = int(fs * 60 * minutes)
 
 
@@ -68,14 +69,25 @@ if __name__ == "__main__":
 
     freq, coh1, surr1, _, coh2, surr2 = results
 
-    mean1 = np.nanmean(coh1, axis=0)
-    mean2 = np.nanmean(coh2, axis=0)
+    median1 = np.nanmedian(coh1, axis=0)
+    median2 = np.nanmedian(coh2, axis=0)
 
-    pyplot.plot(freq, mean1)
-    pyplot.plot(freq, mean2)
+    surr1_25pc = np.nanpercentile(coh1, 25, axis=0)
+    surr1_75pc = np.nanpercentile(coh1, 75, axis=0)
+    surr2_25pc = np.nanpercentile(coh2, 25, axis=0)
+    surr2_75pc = np.nanpercentile(coh2, 75, axis=0)
 
-    pyplot.xlabel("Frequency (Hz)")
-    pyplot.ylabel("Coherence")
+    plt.plot(freq, median1, color="red")
+    plt.plot(freq, median2, color="blue")
 
-    pyplot.legend(["Mean coherence (group 1)", "Mean coherence (group 2)"])
-    pyplot.show()
+    alpha = 0.1
+    plt.fill_between(freq, surr1_25pc, surr1_75pc, color="red", alpha=alpha)
+    plt.fill_between(freq, surr2_25pc, surr2_75pc, color="blue", alpha=alpha)
+
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Coherence")
+
+    plt.gca().set_xscale("log")
+
+    plt.legend(["Median coherence (group 1)", "Median coherence (group 2)"])
+    plt.show()

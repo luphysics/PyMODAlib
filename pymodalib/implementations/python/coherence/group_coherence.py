@@ -73,6 +73,7 @@ def group_coherence(
     fs: float,
     max_surrogates: int = None,
     cleanup: bool = True,
+    percentile: float = 95,
     *wavelet_args,
     **wavelet_kwargs,
 ) -> Tuple[ndarray, ndarray, ndarray]:
@@ -82,6 +83,7 @@ def group_coherence(
 
     Performs inter-subject surrogates.
 
+    :param cleanup:
     :param signals_a:
     :param signals_b:
     :param fs:
@@ -111,6 +113,9 @@ def group_coherence(
     args = [(signals_a[0, :], fs), (signals_b[0, :], fs)]
 
     (wt_a, freq), (wt_b, _) = pool.starmap(wt, args)
+    if len(freq.shape) > 1:
+        freq = freq.reshape(freq.size)
+
     print(f"Finished calculating first pair of wavelet transforms.")
 
     # Create empty arrays to hold all wavelet transforms.
@@ -210,7 +215,7 @@ def group_coherence(
     coherence[diag] = np.NaN
     surrogates = coherence
 
-    surr_percentile = np.nanpercentile(surrogates, 95, axis=(0, 1,))
+    surr_percentile = np.nanpercentile(surrogates, percentile, axis=(0, 1,))
 
     residual_coherence = real_coherences - surr_percentile
     residual_coherence[residual_coherence < 0] = 0
@@ -220,7 +225,7 @@ def group_coherence(
     if cleanup:
         pymodalib.cleanup()
 
-    return freq, residual_coherence, surr_percentile
+    return freq, residual_coherence, surrogates
 
 
 def dual_group_coherence(
@@ -285,6 +290,7 @@ def dual_group_coherence(
         group1_signals2,
         fs,
         cleanup=False,
+        percentile=percentile,
         *wavelet_args,
         **wavelet_kwargs,
     )
@@ -293,6 +299,7 @@ def dual_group_coherence(
         group2_signals2,
         fs,
         cleanup=False,
+        percentile=percentile,
         *wavelet_args,
         **wavelet_kwargs,
     )
