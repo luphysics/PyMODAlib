@@ -14,14 +14,13 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 import multiprocessing
-import uuid
 import warnings
 from typing import Any, Tuple
 
 import numpy as np
-import pymodalib
 from numpy import ndarray
 
+import pymodalib
 from pymodalib.algorithms.coherence import wavelet_phase_coherence
 from pymodalib.algorithms.wavelet import wavelet_transform
 from pymodalib.utils.chunks import array_split
@@ -306,4 +305,7 @@ def dual_group_coherence(
 
     pymodalib.cleanup()
 
-    return (*result1, *result2)
+    freq, coh1, surr1 = result1
+    _, coh2, surr2 = result2
+
+    return freq, coh1, coh2, surr1, surr2

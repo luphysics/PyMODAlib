@@ -16,8 +16,11 @@
 
 """
 This is for testing the group coherence algorithm with known data.
-The data are not supplied as part of PyMODAlib.
+
+It may be useful to read the code, but the data are not supplied as part of PyMODAlib.
 """
+
+import os
 
 import numpy as np
 import scipy.io
@@ -28,8 +31,7 @@ from pymodalib.algorithms.group_coherence import dual_group_coherence
 
 fs = 31.25
 
-minutes = 15
-# minutes = 1
+minutes = 1
 sig_length = int(fs * 60 * minutes)
 
 
@@ -45,16 +47,7 @@ def load_mat(filename: str) -> ndarray:
 
 
 if __name__ == "__main__":
-    import os
-    import platform
-
-    if platform.system() == "Linux":
-        os.environ["LD_LIBRARY_PATH"] = (
-            "/usr/local/MATLAB/MATLAB_Runtime/v96/runtime/glnxa64:"
-            "/usr/local/MATLAB/MATLAB_Runtime/v96/bin/glnxa64:"
-            "/usr/local/MATLAB/MATLAB_Runtime/v96/sys/os/glnxa64:"
-            "/usr/local/MATLAB/MATLAB_Runtime/v96/extern/bin/glnxa64"
-        )
+    os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
     times = np.arange(0, sig_length / fs, 1 / fs)
 
@@ -67,22 +60,25 @@ if __name__ == "__main__":
         group1_signals_a, group1_signals_b, group2_signals_a, group2_signals_b, fs
     )
 
-    freq, coh1, surr1, _, coh2, surr2 = results
+    freq, coh1, coh2, surr1, surr2 = results
 
-    median1 = np.nanmedian(coh1, axis=0)
-    median2 = np.nanmedian(coh2, axis=0)
+    median1 = np.median(coh1, axis=0)
+    median2 = np.median(coh2, axis=0)
 
-    surr1_25pc = np.nanpercentile(coh1, 25, axis=0)
-    surr1_75pc = np.nanpercentile(coh1, 75, axis=0)
-    surr2_25pc = np.nanpercentile(coh2, 25, axis=0)
-    surr2_75pc = np.nanpercentile(coh2, 75, axis=0)
+    pc1_25 = np.percentile(coh1, 25, axis=0)
+    pc1_75 = np.percentile(coh1, 75, axis=0)
+    pc2_25 = np.percentile(coh2, 25, axis=0)
+    pc2_75 = np.percentile(coh2, 75, axis=0)
 
-    plt.plot(freq, median1, color="red")
-    plt.plot(freq, median2, color="blue")
+    colour1 = "black"
+    colour2 = "red"
+
+    plt.plot(freq, median1, color=colour1)
+    plt.plot(freq, median2, color=colour2)
 
     alpha = 0.1
-    plt.fill_between(freq, surr1_25pc, surr1_75pc, color="red", alpha=alpha)
-    plt.fill_between(freq, surr2_25pc, surr2_75pc, color="blue", alpha=alpha)
+    plt.fill_between(freq, pc1_25, pc1_75, color=colour1, alpha=alpha)
+    plt.fill_between(freq, pc2_25, pc2_75, color=colour2, alpha=alpha)
 
     plt.xlabel("Frequency (Hz)")
     plt.ylabel("Coherence")
