@@ -18,10 +18,11 @@ import os
 import uuid
 import warnings
 from os.path import join
+from pathlib import Path
 from typing import Tuple
+
 import numpy as np
 from numpy import ndarray
-from pathlib import Path
 
 CACHE_FOLDER = os.environ.get("PYMODALIB_CACHE") or join(f"{Path.home()}", ".pymodalib")
 os.makedirs(CACHE_FOLDER, exist_ok=True)
@@ -34,10 +35,20 @@ warnings.filterwarnings("once", "The cache folder is located at")
 
 
 def __generate_name() -> str:
+    """
+    Generates a random name for a cache file, using a UUID.
+    """
     return f"{uuid.uuid4()}.dat"
 
 
 def cachedarray(shape: Tuple[int, ...], dtype) -> ndarray:
+    """
+    Creates a Numpy 'memmap' array which is able to cache its values to disk.
+
+    :param shape: the shape of the array
+    :param dtype: the data type of the array
+    :return: a 'memmap' array
+    """
     warnings.warn(ssd_warning, ResourceWarning)
 
     name = __generate_name()
@@ -49,6 +60,9 @@ def cachedarray(shape: Tuple[int, ...], dtype) -> ndarray:
 
 
 def cleanup() -> None:
+    """
+    Deletes all files in the cache folder.
+    """
     for file in os.listdir(CACHE_FOLDER):
         if file.endswith(".dat"):
             try:

@@ -15,7 +15,7 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 import multiprocessing
 import warnings
-from typing import Any, Tuple
+from typing import Tuple
 
 import numpy as np
 from numpy import ndarray
@@ -77,17 +77,7 @@ def group_coherence(
     **wavelet_kwargs,
 ) -> Tuple[ndarray, ndarray, ndarray]:
     """
-    Group coherence algorithm. Calculates coherences for a single group, which contains a
-    signal A and a signal B for each member.
-
-    Performs inter-subject surrogates.
-
-    :param cleanup:
-    :param signals_a:
-    :param signals_b:
-    :param fs:
-    :param max_surrogates:
-    :return: # TODO
+    For docstrings, please see the wrapper functions in 'pymodalib.algorithms'.
     """
     try:
         xa, ya = signals_a.shape
@@ -237,18 +227,9 @@ def dual_group_coherence(
     max_surrogates: int = None,
     *wavelet_args,
     **wavelet_kwargs,
-) -> Any:
+) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray]:
     """
-    Group coherence algorithm. Uses inter-subject surrogates.
-
-    :param group1_signals1:
-    :param group1_signals2:
-    :param group2_signals1:
-    :param group2_signals2:
-    :param fs:
-    :param percentile:
-    :param max_surrogates:
-    :return:
+    For docstrings, please see the wrapper functions in 'pymodalib.algorithms'.
     """
     try:
         x1a, y1a = group1_signals1.shape
