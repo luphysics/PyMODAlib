@@ -13,6 +13,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+import warnings
 
 import numpy as np
 from numpy import ndarray
@@ -47,6 +48,13 @@ def resampl_flow(
 
     L = len(signal)
     ratio = original_freq / resample_freq
+    if int(ratio) != ratio:
+        warnings.warn(
+            f"The ratio between original and resampled sampling frequencies is {ratio}, not an integer. "
+        )
+        ratio = round(ratio)
+
+    ratio = int(ratio)
     output = np.empty(np.int(np.floor(L / ratio)))
 
     for j in range(0, len(output)):
