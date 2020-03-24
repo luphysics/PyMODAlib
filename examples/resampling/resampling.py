@@ -32,10 +32,10 @@ def times(signal, fs) -> ndarray:
 
 
 fs1 = 1
-resampl_1 = pymodalib.resampl_flow(signal, fs, fs1)
+resampl_1 = pymodalib.downsample(signal, fs, fs1)
 
 fs2 = 0.2
-resampl_2 = pymodalib.resampl_flow(signal, fs, fs2)
+resampl_2 = pymodalib.downsample(signal, fs, fs2)
 
 ax1 = plt.subplot(3, 1, 1)
 ax1.plot(times(signal, fs), signal)

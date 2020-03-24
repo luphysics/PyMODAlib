@@ -52,17 +52,12 @@ def resampl_flow(
         warnings.warn(
             f"The ratio between original and resampled sampling frequencies is {ratio}, not an integer. "
         )
-        ratio = round(ratio)
 
-    ratio = int(ratio)
     output = np.empty(np.int(np.floor(L / ratio)))
+    ratio = int(ratio)
 
     for j in range(0, len(output)):
         start = np.int(np.ceil(j * ratio))
         output[j] = np.mean(signal[start : start + ratio])
 
     return output
-
-
-def moving_average(signal: ndarray, window: int, overlap: int = 0) -> ndarray:
-    raise NotImplementedError("Moving average is not implemented yet.")

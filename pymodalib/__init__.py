@@ -19,13 +19,13 @@ Imports useful functions to make them easily accessible.
 
 from pymodalib.algorithms.harmonics import harmonicfinder
 from pymodalib.algorithms.preprocessing import preprocess
-from pymodalib.algorithms.signals import resampl_flow
+from pymodalib.algorithms.signals import resampl_flow as downsample
 from pymodalib.algorithms.wavelet import wavelet_transform
 
 # This doesn't do anything useful; just ensures that PyCharm doesn't try to remove unnecessary imports.
 imported = (
-    resampl_flow,
+    downsample,
+    preprocess,
     wavelet_transform,
     harmonicfinder,
-    preprocess,
 )
