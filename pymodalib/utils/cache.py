@@ -25,14 +25,16 @@ from typing import Tuple
 import numpy as np
 from numpy import ndarray
 
-CACHE_FOLDER = os.environ.get("PYMODALIB_CACHE") or join(f"{Path.home()}", ".pymodalib")
+env_variable = os.environ.get("PYMODALIB_CACHE")
+
+CACHE_FOLDER = env_variable or join(f"{Path.home()}", ".pymodalib")
 os.makedirs(CACHE_FOLDER, exist_ok=True)
 
 ssd_warning = (
-    f"The cache folder is located at {CACHE_FOLDER}. It is highly recommended that you ensure the "
-    f"cache folder is not located on an SSD. For more information, please see the developer guide."
+    f"The cache folder is located at {CACHE_FOLDER}. It is recommended that you ensure the "
+    f"cache folder is not located on an SSD. For more information, please see the user guide."
 )
-warnings.filterwarnings("once", "The cache folder is located at")
+warnings.filterwarnings("once", ssd_warning[:10])
 
 
 def __generate_name() -> str:
@@ -50,7 +52,8 @@ def cachedarray(shape: Tuple[int, ...], dtype) -> ndarray:
     :param dtype: the data type of the array
     :return: a 'memmap' array
     """
-    warnings.warn(ssd_warning, ResourceWarning)
+    if not env_variable:
+        warnings.warn(ssd_warning, ResourceWarning)
 
     name = __generate_name()
     while name in os.listdir(CACHE_FOLDER):
