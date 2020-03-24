@@ -13,9 +13,12 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
-from utils.cache import cachedarray, cleanup
+from pymodalib.algorithms.group_coherence import group_coherence, dual_group_coherence
+from pymodalib.utils.cache import cachedarray, cleanup
 
 __imported = (
     cachedarray,
     cleanup,
+    group_coherence,
+    dual_group_coherence,
 )
