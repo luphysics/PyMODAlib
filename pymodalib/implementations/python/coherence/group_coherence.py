@@ -21,7 +21,7 @@ import numpy as np
 from numpy import ndarray
 
 import pymodalib
-from pymodalib.algorithms.coherence import wavelet_phase_coherence
+from pymodalib.algorithms.coherence import wphcoh
 from pymodalib.algorithms.wavelet import wavelet_transform
 from pymodalib.utils.chunks import array_split
 
@@ -60,7 +60,7 @@ def _group_coherence(wavelet_transforms_a: ndarray, wavelet_transforms_b: ndarra
 
     for i, wt1 in enumerate(wavelet_transforms_a):
         for j, wt2 in enumerate(wavelet_transforms_b):
-            coh, _ = wavelet_phase_coherence(wt1, wt2)
+            coh, _ = wphcoh(wt1, wt2)
             out[i, j, :] = np.average(coh, axis=1)
 
     return out

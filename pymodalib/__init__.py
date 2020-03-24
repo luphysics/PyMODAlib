@@ -13,8 +13,12 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+from pymodalib.algorithms.coherence import wphcoh, tlphcoh
 from pymodalib.algorithms.group_coherence import group_coherence, dual_group_coherence
 from pymodalib.utils.cache import cachedarray, cleanup
+
+wavelet_phase_coherence = wphcoh
+time_localised_wavelet_phase_coherence = tlphcoh
 
 __imported = (
     cachedarray,
