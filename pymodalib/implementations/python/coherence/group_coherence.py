@@ -14,6 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 import multiprocessing
+import random
 import warnings
 from typing import Tuple
 
@@ -54,12 +55,17 @@ def _chunk_wt(signals_a: ndarray, signals_b: ndarray, fs: float, *args, **kwargs
     return out_a, out_b
 
 
-def _group_coherence(wavelet_transforms_a: ndarray, wavelet_transforms_b: ndarray):
+def _group_coherence(
+    wavelet_transforms_a: ndarray, wavelet_transforms_b: ndarray, mask: ndarray
+):
     coh_length = wavelet_transforms_a.shape[1]
     out = np.empty((len(wavelet_transforms_a), len(wavelet_transforms_b), coh_length))
 
     for i, wt1 in enumerate(wavelet_transforms_a):
         for j, wt2 in enumerate(wavelet_transforms_b):
+            if not mask[i, j]:
+                continue
+
             coh, _ = wphcoh(wt1, wt2)
             out[i, j, :] = np.average(coh, axis=1)
 
@@ -156,12 +162,45 @@ def group_coherence(
     |  sig_a_2  |     s     |     C     |     s     |    s    |
     |  sig_a_3  |     s     |     s     |     C     |    s    |
     |   .....   |     s     |     s     |     s     |    C    |
+    
+    If 'max_surrogates' is smaller than the number of surrogates, then signal pairs for surrogates
+    will be chosen randomly. In the above array, spaces without surrogates will be filled with NaN values.
     """
 
-    # Create empty array for coherence.
+    # Create empty array for coherence and surrogates.
     coherence = np.empty((xa, *wavelet_transforms_a.shape[:-1]))
 
-    indices = np.arange(0, coherence.shape[0])
+    # Number of possible surrogates. (Dimensions of coherence array minus number of elements along the diagonal).
+    potential_surrogates = xa ** 2 - xa
+
+    if max_surrogates is not None:
+        surrogates = min(potential_surrogates, max_surrogates)
+    else:
+        surrogates = potential_surrogates
+
+    # The mask will show which elements are surrogates and can be skipped.
+    mask = np.empty(coherence.shape[:-1], dtype=np.bool)
+    mask.fill(True)
+
+    def random_pair(start, end):
+        return random.randint(start, end), random.randint(start, end)
+
+    # Randomly choose which surrogates to skip.
+    blanks = 0
+    while surrogates > 0 and blanks < potential_surrogates - surrogates:
+        index = random_pair(0, xa - 1)
+
+        # Ensure index is not a real coherence, and that it hasn't already been chosen.
+        if index[0] != index[1] and mask[index]:
+            mask[index] = False
+            blanks += 1
+
+    if surrogates == 0:
+        mask[:, :] = False
+        diag = np.diag_indices(len(mask))
+        mask[diag] = True
+
+    indices = np.arange(0, len(coherence))
     chunks = array_split(indices, processes)
 
     args = []
@@ -170,15 +209,17 @@ def group_coherence(
 
         # Split up into chunks by rows.
         wavelets_a = wavelet_transforms_a[start:end, :, :]
+        mask_a = mask[start:end]
 
         # Keep all columns instead of splitting into chunks.
         wavelets_b = wavelet_transforms_b[:, :, :]
 
-        args.append((wavelets_a, wavelets_b))
+        args.append((wavelets_a, wavelets_b, mask_a))
 
     del wavelet_transforms_a
     del wavelet_transforms_b
 
+    # Calculate coherences and surrogates in parallel.
     results = pool.starmap(_group_coherence, args)
     print(f"Finished calculating coherence.")
 
@@ -188,6 +229,11 @@ def group_coherence(
 
         coherence[start:end, :] = result[:, :]
 
+    del results
+
+    # Set all skipped surrogates to NaN.
+    coherence[~mask, :] = np.NaN
+
     """
     Now we have a large array containing the coherence between all signals.
     
@@ -196,7 +242,7 @@ def group_coherence(
     """
 
     # Indices along the diagonal of the coherence array.
-    # These correspond to the useful coherences.
+    # These correspond to the useful coherences; other values are surrogates.
     diag = np.diag_indices(xa)
     real_coherences = coherence[diag]
 
@@ -205,11 +251,13 @@ def group_coherence(
     surrogates = coherence
 
     surr_percentile = np.nanpercentile(surrogates, percentile, axis=(0, 1,))
+    surr_percentile[np.isnan(surr_percentile)] = 0
 
     residual_coherence = real_coherences - surr_percentile
     residual_coherence[residual_coherence < 0] = 0
 
     del coherence
+    del surr_percentile
 
     if cleanup:
         pymodalib.cleanup()
@@ -257,9 +305,8 @@ def dual_group_coherence(
         )
 
     recommended_surr = 19
-    surr = y1b
 
-    if max_surrogates and max_surrogates < recommended_surr:
+    if max_surrogates is not None and max_surrogates < recommended_surr:
         warnings.warn(
             f"Low number of surrogates: {max_surrogates}. A larger number of surrogates is recommended.",
             RuntimeWarning,
@@ -271,6 +318,7 @@ def dual_group_coherence(
         fs,
         cleanup=False,
         percentile=percentile,
+        max_surrogates=max_surrogates,
         *wavelet_args,
         **wavelet_kwargs,
     )
@@ -280,6 +328,7 @@ def dual_group_coherence(
         fs,
         cleanup=False,
         percentile=percentile,
+        max_surrogates=max_surrogates,
         *wavelet_args,
         **wavelet_kwargs,
     )
@@ -288,5 +337,8 @@ def dual_group_coherence(
 
     freq, coh1, surr1 = result1
     _, coh2, surr2 = result2
+
+    del result1
+    del result2
 
     return freq, coh1, coh2, surr1, surr2
