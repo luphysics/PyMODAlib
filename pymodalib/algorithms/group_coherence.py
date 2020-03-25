@@ -39,10 +39,13 @@ def group_coherence(
     **wavelet_kwargs,
 ) -> Tuple[ndarray, ndarray, ndarray]:
     """
-    Group coherence algorithm. Calculates coherences for a single group, whose members each have
+    Group wavelet phase coherence algorithm. Calculates coherences for a single group, whose members each have
     a signal A and a signal B.
 
     This algorithm calculates inter-subject surrogates and uses them to calculate the residual coherence.
+
+    Note: you can also pass *args and **kwargs to this function, which will be used when
+    performing the wavelet transform.
 
     :param signals_a: the set of signals A for each member of the group
     :param signals_b: the signals B for each member of the group
@@ -51,6 +54,7 @@ def group_coherence(
     :param max_surrogates: the maximum number of surrogates; this may be useful to reduce the time taken
                            to perform the calculation
     :param cleanup: whether to clean up the cache folder after completion
+
     :return: [1D array] the frequencies;
              [2D array] the residual coherence;
              [3D array] the surrogates
@@ -79,7 +83,21 @@ def dual_group_coherence(
     **wavelet_kwargs,
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray]:
     """
-    Essentially identical to 'group_coherence', except it performs group coherence on two groups instead of one.
+    Group wavelet phase coherence algorithm. Calculates coherences for two groups, whose members each have
+    a signal A and a signal B.
+
+    This algorithm calculates inter-subject surrogates and uses them to calculate the residual coherence.
+
+    Note: you can also pass *args and **kwargs to this function, which will be used when
+    performing the wavelet transform.
+
+    :param group1_signals_a:
+    :param group1_signals_b:
+    :param group2_signals_a:
+    :param group2_signals_b:
+    :param fs: the sampling frequency of the signals
+    :param percentile: the percentile at which the surrogates will be subtracted from the coherence
+    :param max_surrogates: the maximum number of surrogates; this may be useful to reduce the time taken
 
     :return: [1D array] the frequencies;
              [2D array] the residual coherence for group 1;
