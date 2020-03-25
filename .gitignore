@@ -2,6 +2,8 @@
 .idea/misc.xml
 .idea/pymoda-lib.iml
 
+.vscode/
+
 examples/**/output.npz
 
 examples/group_coherence/Cphd**
