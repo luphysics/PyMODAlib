@@ -15,16 +15,16 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Basic signal operations, e.g. pre-processing and down-sampling.
+Basic signal operations, such as pre-processing and down-sampling.
 """
 
 import warnings
 from typing import Optional
 
 import numpy as np
-from numpy.core._multiarray_umath import ndarray
+from numpy import ndarray
 
-from implementations.python.signals.preprocessing import preprocess_impl
+from pymodalib.implementations.python.signals.preprocessing import preprocess_impl
 
 
 class ResamplingException(Exception):
