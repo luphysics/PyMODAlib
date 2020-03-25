@@ -40,6 +40,8 @@ def wavelet_transform(
     padding: str = "predictive",
     fstep: str = "auto",
     return_opt: bool = False,
+    *args,
+    **kwargs,
 ) -> Union[Tuple[ndarray, ndarray], Tuple[ndarray, ndarray, Dict]]:
     """
     Wavelet transform function.
@@ -73,6 +75,8 @@ def wavelet_transform(
             wavelet,
             preprocess,
             rel_tolerance,
+            *args,
+            **kwargs,
         )
     elif implementation == "matlab":
         wt, freq, opt = matlab_impl(
@@ -87,6 +91,8 @@ def wavelet_transform(
             padding=padding,
             fstep=fstep,
             rel_tolerance=rel_tolerance,
+            *args,
+            **kwargs,
         )
     else:
         raise BadParametersException(

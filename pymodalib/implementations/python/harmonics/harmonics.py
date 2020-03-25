@@ -25,6 +25,7 @@ from numpy import ndarray
 from scheduler.Scheduler import Scheduler
 
 from pymodalib.implementations.python.harmonics.aaft4 import aaft4
+from pymodalib.utils.chunks import array_split
 
 
 def harmonicfinder_impl_python(
@@ -151,7 +152,7 @@ def _calculate_harmonics(output1, m, n, surr_count: int, parallel=True) -> ndarr
         num_processes = cpu_count() - surr_count
         pool = Pool(processes=num_processes)
 
-        ranges = np.array_split(np.arange(0, m), num_processes)
+        ranges = array_split(np.arange(0, m), num_processes)
         args = [(r[0], r[-1] + 1, output1, n, res, True) for r in ranges]
 
         results = pool.starmap(_do_harmonics_loop, args)

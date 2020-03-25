@@ -13,26 +13,12 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
-import os
+from typing import List
 
 import numpy as np
-from matplotlib import pyplot as plt
+from numpy import ndarray
 
-os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-load = np.load("output.npz", allow_pickle=True)
-
-wt = load.get("wt")
-freq = load.get("freq")
-times = load.get("times")
-
-fig, ax = plt.subplots()
-mesh1, mesh2 = np.meshgrid(times, freq)
-ax.contourf(mesh1, mesh2, np.abs(wt))
-
-ax.set_yscale("log")
-ax.set_xlabel("Time (s)")
-ax.set_ylabel("Frequency (Hz)")
-ax.set_title("Amplitude of wavelet transform")
-
-plt.show()
+def array_split(array: ndarray, num_chunks: int) -> List[ndarray]:
+    chunks = np.array_split(array, num_chunks)
+    return [c for c in chunks if not c.size <= 0]
