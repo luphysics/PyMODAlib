@@ -13,7 +13,6 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 import glob
 import os
 from os import path
@@ -24,6 +23,7 @@ from setuptools import setup
 VERSION = "0.3.0b1"
 
 here = path.abspath(path.dirname(__file__))
+os.chdir(here)
 
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
