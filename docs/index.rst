@@ -6,6 +6,8 @@
 Welcome to PyMODAlib's documentation!
 =====================================
 
+The following table displays the most important modules from PyMODAlib. To view the documentation for the functions inside each module, click the module name.
+
 .. autosummary::
    :toctree: _autosummary
 
@@ -20,7 +22,7 @@ Welcome to PyMODAlib's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+For the full documentation, you can click "Module Index" below.
 
 Indices and tables
 ==================
