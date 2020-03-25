@@ -39,18 +39,18 @@ def group_coherence(
     **wavelet_kwargs,
 ) -> Tuple[ndarray, ndarray, ndarray]:
     """
-    Group wavelet phase coherence algorithm. Calculates coherences for a single group, whose members each have
+    Group wavelet phase coherence algorithm. Calculates coherence for a single group, whose members each have
     a signal A and a signal B.
 
     This algorithm calculates inter-subject surrogates and uses them to calculate the residual coherence.
 
     Note: you can also pass *args and **kwargs to this function, which will be used when
-    performing the wavelet transform.
+    performing the wavelet transform. For example, `wavelet="Morlet"`.
 
     :param signals_a: the set of signals A for each member of the group
-    :param signals_b: the signals B for each member of the group
+    :param signals_b: the set of signals B for each member of the group
     :param fs: the sampling frequency of the signals
-    :param percentile: the percentile at which the surrogates will be subtracted from the coherence
+    :param percentile: the percentile of the surrogates which will be subtracted from the coherence
     :param max_surrogates: the maximum number of surrogates; this may be useful to reduce the time taken
                            to perform the calculation
     :param cleanup: whether to clean up the cache folder after completion
@@ -83,21 +83,22 @@ def dual_group_coherence(
     **wavelet_kwargs,
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray]:
     """
-    Group wavelet phase coherence algorithm. Calculates coherences for two groups, whose members each have
-    a signal A and a signal B.
+    Group wavelet phase coherence algorithm. Calculates coherence for two groups, whose members each have
+    a signal A and a signal B. The groups can be different sizes.
 
     This algorithm calculates inter-subject surrogates and uses them to calculate the residual coherence.
 
     Note: you can also pass *args and **kwargs to this function, which will be used when
-    performing the wavelet transform.
+    performing the wavelet transform. For example, `wavelet="Morlet"`.
 
-    :param group1_signals_a:
-    :param group1_signals_b:
-    :param group2_signals_a:
-    :param group2_signals_b:
+    :param group1_signals_a: the set of signals A for group 1
+    :param group1_signals_b: the set of signals B for group 1
+    :param group2_signals_a: the set of signals A for group 2
+    :param group2_signals_b: the set of signals B for group 2
     :param fs: the sampling frequency of the signals
-    :param percentile: the percentile at which the surrogates will be subtracted from the coherence
+    :param percentile: the percentile of the surrogates which will be subtracted from the coherence
     :param max_surrogates: the maximum number of surrogates; this may be useful to reduce the time taken
+                           to perform the calculation
 
     :return: [1D array] the frequencies;
              [2D array] the residual coherence for group 1;

@@ -15,17 +15,22 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Basic signal operations, such as downsampling.
+Basic signal operations, e.g. pre-processing and down-sampling.
 """
 
 import warnings
+from typing import Optional
 
 import numpy as np
-from numpy import ndarray
+from numpy.core._multiarray_umath import ndarray
+
+from implementations.python.signals.preprocessing import preprocess_impl
 
 
 class ResamplingException(Exception):
-    pass
+    """
+    Exception which may be thrown while resampling.
+    """
 
 
 def resampl_flow(
@@ -34,10 +39,10 @@ def resampl_flow(
     """
     Down-samples a signal, using a moving average.
 
-    :param signal: the signal to re-sample
-    :param original_freq: the frequency of the signal
-    :param resample_freq: the frequency to use for the re-sampled signal
-    :return: the re-sampled signal
+    :param signal: the signal to down-sample
+    :param original_freq: the original sampling frequency of the signal
+    :param resample_freq: the sampling frequency of the down-sampled signal
+    :return: the down-sampled signal
     """
     try:
         x, y = signal.shape
@@ -66,3 +71,21 @@ def resampl_flow(
         output[j] = np.mean(signal[start : start + ratio])
 
     return output
+
+
+def preprocess(
+    signal: ndarray,
+    fs: float,
+    fmin: Optional[float] = None,
+    fmax: Optional[float] = None,
+) -> ndarray:
+    """
+    Pre-processes a signal, performing filtering and de-trending.
+
+    :param signal: the signal to pre-process
+    :param fs: the sampling frequency
+    :param fmin: the minimum frequency
+    :param fmax: the maximum frequency
+    :return: the pre-processed signal as a new ndarray
+    """
+    return preprocess_impl(signal, fs, fmin, fmax)

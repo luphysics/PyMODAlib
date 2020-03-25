@@ -50,7 +50,7 @@ def harmonicfinder(
     :param surrogates: the number of surrogates
     :param parallel: whether to parallelize the algorithm, which provides a significant speed boost in many cases
     :param crop: whether to crop the results, removing the NaN values around the left and bottom edges
-    :return: [1D array] the frequencies;                #TODO docs
+    :return: [1D array] the frequencies;
              [2D array] the raw harmonics;
              [2D array] the number of surrogates which the raw harmonics are higher than at each point;
              [2D array] the raw harmonics relative to the mean and standard deviation of the surrogate distribution

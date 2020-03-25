@@ -18,7 +18,7 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-from pymodalib.algorithms.preprocessing import preprocess
+from pymodalib import preprocess
 
 # Set current working directory to the location of this script.
 os.chdir(os.path.abspath(os.path.dirname(__file__)))

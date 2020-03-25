@@ -13,19 +13,17 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
-"""
-Imports useful functions to make them easily accessible.
-"""
 
-from pymodalib.algorithms.harmonics import harmonicfinder
-from pymodalib.algorithms.preprocessing import preprocess
-from pymodalib.algorithms.signals import resampl_flow as downsample
-from pymodalib.algorithms.wavelet import wavelet_transform
+# Import functions to make them easily accessible.
+from algorithms.signals import preprocess
 from pymodalib.algorithms.coherence import wphcoh, tlphcoh
 from pymodalib.algorithms.group_coherence import group_coherence, dual_group_coherence
+from pymodalib.algorithms.harmonics import harmonicfinder
+from pymodalib.algorithms.signals import resampl_flow as downsample
+from pymodalib.algorithms.wavelet import wavelet_transform
 from pymodalib.utils.cache import cachedarray, cleanup
 
-# Make these functions accessile with different names.
+# Provide aliases for these functions.
 wavelet_phase_coherence = wphcoh
 time_localised_wavelet_phase_coherence = tlphcoh
 
