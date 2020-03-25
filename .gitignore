@@ -3,6 +3,7 @@
 .idea/pymoda-lib.iml
 
 .vscode/
+docs/source/
 
 examples/**/output.npz
 
