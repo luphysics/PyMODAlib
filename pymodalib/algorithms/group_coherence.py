@@ -13,6 +13,11 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+"""
+Group wavelet phase coherence with inter-subject surrogates.
+"""
+
 from typing import Tuple
 
 from numpy import ndarray

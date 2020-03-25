@@ -13,9 +13,15 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+"""
+Detecting harmonics.
+"""
+
 from typing import Tuple
 
 from numpy import ndarray
+
 from pymodalib.implementations.python.harmonics.harmonics import (
     harmonicfinder_impl_python as impl,
 )
