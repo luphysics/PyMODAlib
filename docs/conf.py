@@ -46,6 +46,7 @@ apidoc_module_dir = "../pymodalib"
 apidoc_output_dir = "source"
 apidoc_excluded_paths = ["tests"]
 apidoc_separate_modules = True
+apidoc_extra_args = ["-f"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
