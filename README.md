@@ -1,8 +1,10 @@
 # PyMODAlib
 
-![License: GPL](https://img.shields.io/badge/License-GPLv3-blue.svg)
-![PyPI: version](https://img.shields.io/pypi/v/PyMODAlib)
-![PyPI: Python version](https://img.shields.io/pypi/pyversions/PyMODAlib)
+[![DOI](https://zenodo.org/badge/243930888.svg)](https://zenodo.org/badge/latestdoi/243930888)
+[![License: GPL](https://img.shields.io/badge/License-GPLv3-10b515.svg)](https://github.com/luphysics/PyMODAlib/blob/master/LICENSE)
+[![PyPI: version](https://img.shields.io/pypi/v/PyMODAlib)](https://pypi.org/project/PyMODAlib)
+[![PyPI: Python version](https://img.shields.io/pypi/pyversions/PyMODAlib)](https://pypi.org/project/PyMODAlib)
+[![Code style: Black](https://img.shields.io/badge/code_style-black-black)](https://github.com/psf/black)
 
 PyMODAlib is a Python library containing the algorithms used by [PyMODA](https://github.com/luphysics/PyMODA). With PyMODAlib, you can write Python scripts to perform the same calculations as PyMODA.
 
@@ -34,13 +36,15 @@ pip install -U pymodalib
 
 `PyMODAlib` is still early in development. Currently, the features implemented are:
 
+- Wavelet transform.
+- Wavelet phase coherence.
+- Group coherence for one or two groups, with inter-subject surrogates.
 - Detecting harmonics.
+- Downsampling.
 
 ### Examples
 
 There are examples of using PyMODAlib's functionality in the [examples](https://github.com/luphysics/PyMODAlib/tree/master/examples) directory.
-
-To try an example, download the PyMODAlib repository [as a zip file](https://github.com/luphysics/PyMODAlib/zipball/master) or by using `git clone`, then run the code with Python as normal.
 
 To download the dependencies required to run the examples, open a terminal and run:
 
@@ -48,7 +52,7 @@ To download the dependencies required to run the examples, open a terminal and r
 pip install -U pymodalib matplotlib
 ```
 
-The examples are independent of the actual PyMODAlib source code; they just import the PyMODAlib installed via `pip`.
+To try the examples, download the PyMODAlib repository [as a zip file](https://github.com/luphysics/PyMODAlib/zipball/master) or by using `git clone`, then run Python files from the `examples` subfolders.
 
 ### License
 
@@ -66,7 +70,7 @@ When developing PyMODAlib, you can test your changes by installing the library l
 pip install -e .
 ```
 
-> **Note:** After making changes to PyMODAlib, you don't need to run the `pip install` command again. Any Python script which uses `import pymodalib` will reflect the changes immediately.
+> **Note:** After making changes to PyMODAlib, you don't need to run the `pip install` command again. Any Python script which imports `pymodalib` will reflect the changes immediately.
 
 Switching back to the release version of PyMODAlib is simple:
 
