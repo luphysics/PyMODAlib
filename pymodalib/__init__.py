@@ -15,7 +15,7 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 # Import functions to make them easily accessible.
-from algorithms.signals import preprocess
+from pymodalib.algorithms.signals import preprocess
 from pymodalib.algorithms.coherence import wphcoh, tlphcoh
 from pymodalib.algorithms.group_coherence import group_coherence, dual_group_coherence
 from pymodalib.algorithms.harmonics import harmonicfinder
