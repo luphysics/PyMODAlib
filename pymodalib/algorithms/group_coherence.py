@@ -18,9 +18,11 @@
 Group wavelet phase coherence with inter-subject surrogates.
 """
 
-from typing import Tuple
+from typing import Tuple, List
 
+import numpy as np
 from numpy import ndarray
+from scipy.stats import ranksums
 
 from pymodalib.implementations.python.coherence.group_coherence import (
     dual_group_coherence as dual_group_impl,
@@ -154,3 +156,56 @@ def dual_group_coherence(
         *wavelet_args,
         **wavelet_kwargs,
     )
+
+
+def statistical_test(
+    freq: ndarray, coh1: ndarray, coh2: ndarray, bands: List[Tuple[float, float]]
+) -> List[float]:
+    """
+    Performs a statistical test on the results of dual group wavelet phase coherence, to check for significance.
+
+    Parameters
+    ----------
+    freq : ndarray
+        [1D array] The frequencies.
+    coh1 : ndarray
+        [2D array] The coherence for group 1.
+    coh2 : ndarray
+        [2D array] The coherence for group 2.
+    bands : List[Tuple[int, int]]
+        The frequency intervals which the statistics will be calculated for.
+
+    Returns
+    -------
+    pvalues : List[float]
+        The p-values associated with each frequency interval.
+    """
+    assert bands, f"At least one frequency band must be supplied."
+    assert len(freq) == coh1.shape[1] == coh2.shape[1], (
+        f"The first dimension of 'freq' must be equal to the "
+        f"second dimension of 'coh1' and 'coh2'."
+    )
+
+    indices = []
+    for b in bands:
+        f1, f2 = b
+        band_indices = ((freq >= f1) & (freq < f2)).nonzero()[0]
+        indices.append(band_indices)
+
+    results: List[Tuple[float, float]] = []
+
+    for index_arr in indices:
+        x = coh1[:, index_arr]
+        y = coh2[:, index_arr]
+
+        xm = np.nanmean(x, axis=1)
+        ym = np.nanmean(y, axis=1)
+
+        if xm.size > 0 and not np.isnan(xm).all() and not np.isnan(ym).all():
+            w, p = ranksums(xm, ym)
+        else:
+            w, p = np.NaN, np.NaN
+
+        results.append((w, p,))
+
+    return [p for (w, p) in results]

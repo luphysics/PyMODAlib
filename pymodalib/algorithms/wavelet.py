@@ -64,7 +64,8 @@ def wavelet_transform(
     resolution: float
          (Default value = 1) The frequency resolution for the transform.
     cut_edges: bool
-         (Default value = False) Whether to cut the edges of the transform, removing the cone of influence from the final result.
+         (Default value = False) Whether to cut the edges of the transform, making the cone of influence 
+         visible in the result.
     wavelet : {"Lognorm", "Morlet", "Bump"}, optional
          (Default value = "Lognorm") The type of wavelet transform.
     preprocess: bool
@@ -72,7 +73,8 @@ def wavelet_transform(
     rel_tolerance: float
          (Default value = 0.01) # TODO docs
     implementation : {"matlab", "python"}, optional
-         (Default value = "matlab")
+         (Default value = "matlab") Whether to use the MATLAB implementation, or the Python implementation.
+         The MATLAB implementation requires the MATLAB Runtime.
     padding: str
          (Default value = "predictive") The type of padding to use when calculating the transform.
     fstep: str

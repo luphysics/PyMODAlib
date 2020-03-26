@@ -75,15 +75,18 @@ if __name__ == "__main__":
         group1_signals_a, group1_signals_b, group2_signals_a, group2_signals_b, fs
     )
 
+    # Save the results as a data file.
+    np.savez(f"output.npz", freq=freq, coh1=coh1, coh2=coh2)
+
     # Calculate median coherence.
-    median1 = np.median(coh1, axis=0)
-    median2 = np.median(coh2, axis=0)
+    median1 = np.nanmedian(coh1, axis=0)
+    median2 = np.nanmedian(coh2, axis=0)
 
     # Calculate 25th and 75th percentiles of the surrogates.
-    pc1_25 = np.percentile(coh1, 25, axis=0)
-    pc1_75 = np.percentile(coh1, 75, axis=0)
-    pc2_25 = np.percentile(coh2, 25, axis=0)
-    pc2_75 = np.percentile(coh2, 75, axis=0)
+    pc1_25 = np.nanpercentile(coh1, 25, axis=0)
+    pc1_75 = np.nanpercentile(coh1, 75, axis=0)
+    pc2_25 = np.nanpercentile(coh2, 25, axis=0)
+    pc2_75 = np.nanpercentile(coh2, 75, axis=0)
 
     colour1 = "black"
     colour2 = "red"
