@@ -15,17 +15,12 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 # Import functions to make them easily accessible.
-from pymodalib.algorithms.signals import preprocess
-from pymodalib.algorithms.coherence import wphcoh, tlphcoh
 from pymodalib.algorithms.group_coherence import group_coherence, dual_group_coherence
 from pymodalib.algorithms.harmonics import harmonicfinder
+from pymodalib.algorithms.signals import preprocess
 from pymodalib.algorithms.signals import resampl_flow as downsample
 from pymodalib.algorithms.wavelet import wavelet_transform
 from pymodalib.utils.cache import cachedarray, cleanup
-
-# Provide aliases for these functions.
-wavelet_phase_coherence = wphcoh
-time_localised_wavelet_phase_coherence = tlphcoh
 
 # This isn't important; it just ensures that PyCharm doesn't try to remove unnecessary imports.
 __imported = (

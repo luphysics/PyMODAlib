@@ -28,10 +28,19 @@ def wphcoh(wt1: ndarray, wt2: ndarray) -> Tuple[ndarray, ndarray]:
     """
     Time-averaged wavelet phase coherence.
 
-    :param wt1: wavelet transform of first signal
-    :param wt2: wavelet transform of second signal
-    :return: [1D array] phase coherence;
-             [1D array] phase difference
+    Parameters
+    ----------
+    wt1 : ndarray
+        [2D array, complex] Wavelet transform of the first signal.
+    wt2 : ndarray
+        [2D array, complex] Wavelet transform of the second signal.
+
+    Returns
+    -------
+    phcoh : ndarray
+        [1D array] Wavelet phase coherence.
+    phdiff : ndarray
+        [1D array] Wavelet phase difference.
     """
     FN = min(wt1.shape[0], wt2.shape[0])
 
@@ -71,12 +80,23 @@ def tlphcoh(
     """
     Time-localized phase coherence.
 
-    :param wt1: Wavelet transform of the first signal
-    :param wt2: Wavelet transform og the second signal with the same shape as wt1
-    :param freq: Frequencies at which the wavelet transforms wt1 and wt2 were calculated
-    :param fs: Sampling frequency
-    :param wsize: Window size, default is 10 samples
-    :return: [2D array] time-localized wavelet phase coherence with the same shape as wt1
+    Parameters
+    ----------
+    wt1 : ndarray
+        [2D array, complex] Wavelet transform of the first signal.
+    wt2 : ndarray
+        [2D array, complex] Wavelet transform of the second signal. Must be the same shape as `wt1`.
+    freq : ndarray
+        [1D array] Frequencies at which the wavelet transforms wt1 and wt2 were calculated.
+    fs : float
+        Sampling frequency of the signals.
+    wsize : int, optional
+         (Default value = 10) The window size.
+
+    Returns
+    -------
+    tpc : ndarray
+        [2D array] The time-localized wavelet phase coherence.
     """
     NF, L = wt1.shape
 

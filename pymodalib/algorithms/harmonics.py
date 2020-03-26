@@ -41,19 +41,37 @@ def harmonicfinder(
     """
     Harmonic-finder algorithm.
 
-    :param signal: [1D array] the signal to analyse
-    :param fs: the sampling frequency of the signal
-    :param scale_min:                                   #TODO docs
-    :param scale_max:                                   #TODO docs
-    :param sigma:                                       #TODO docs
-    :param time_resolution: the time resolution
-    :param surrogates: the number of surrogates
-    :param parallel: whether to parallelize the algorithm, which provides a significant speed boost in many cases
-    :param crop: whether to crop the results, removing the NaN values around the left and bottom edges
-    :return: [1D array] the frequencies;
-             [2D array] the raw harmonics;
-             [2D array] the number of surrogates which the raw harmonics are higher than at each point;
-             [2D array] the raw harmonics relative to the mean and standard deviation of the surrogate distribution
+    Parameters
+    ----------
+    signal : ndarray
+        [1D array] The signal to analyse.
+    fs : float
+        The sampling frequency of the signal.
+    scale_min : float
+        # TODO docs
+    scale_max : float
+        # TODO docs
+    sigma : float
+        # TODO docs
+    time_resolution : float, optional
+        (Default value = 0.01) The time resolution.
+    surrogates : int
+        (Default value = 10) The number of surrogates.
+    parallel : bool
+        (Default value = True) Whether to parallelize the algorithm, which provides a significant speed boost in many cases.
+    crop : bool, optional
+        (Default value = True) Whether to crop the results, removing the NaN values around the left and bottom edges.
+
+    Returns
+    -------
+    freq : ndarray
+        [1D array] The frequencies.
+    res : ndarray
+        [2D array] The raw harmonics.
+    pos1 : ndarray
+        [2D array] The number of surrogates which the raw harmonics are higher than at each point.
+    pos2 : ndarray
+        [2D array] The raw harmonics relative to the mean and standard deviation of the surrogate distribution.
     """
     return impl(
         signal,

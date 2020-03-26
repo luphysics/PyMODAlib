@@ -51,20 +51,47 @@ def wavelet_transform(
     """
     Wavelet transform function.
 
-    :param signal: the signal to perform the wavelet transform on
-    :param fs: the sampling frequency of the signal
-    :param fmin: the minimum frequency for the transform
-    :param fmax: the maximum frequency for the transform
-    :param resolution:
-    :param cut_edges:
-    :param wavelet:
-    :param preprocess:
-    :param rel_tolerance:
-    :param implementation:
-    :param fstep:
-    :param padding:
-    :param return_opt:
-    :return: [2D array] the wavelet transform; [1D array] the frequencies
+    Parameters
+    ----------
+    signal : ndarray
+        [1D array] The signal to perform the wavelet transform on.
+    fs : float
+        The sampling frequency of the signal.
+    fmin: float
+         (Default value = None) The minimum frequency for the transform.
+    fmax: float
+         (Default value = None) The maximum frequency for the transform.
+    resolution: float
+         (Default value = 1) The frequency resolution for the transform.
+    cut_edges: bool
+         (Default value = False) Whether to cut the edges of the transform, removing the cone of influence from the final result.
+    wavelet : {"Lognorm", "Morlet", "Bump"}, optional
+         (Default value = "Lognorm") The type of wavelet transform.
+    preprocess: bool
+         (Default value = True) Whether to perform pre-processing on the signal before calculating the wavelet transform.
+    rel_tolerance: float
+         (Default value = 0.01) # TODO docs
+    implementation : {"matlab", "python"}, optional
+         (Default value = "matlab")
+    padding: str
+         (Default value = "predictive") The type of padding to use when calculating the transform.
+    fstep: str
+         (Default value = "auto") # TODO docs
+    return_opt: bool
+         (Default value = False) Whether to return a dictionary containing the options used with the wavelet transform.
+    *args : Any, optional
+        Any other arguments to pass to the wavelet transform.
+    **kwargs : Any, optional
+        Any other keyword arguments to pass to the wavelet transform.
+
+    Returns
+    -------
+    wt : ndarray
+        [2D array] The wavelet transform .
+    freq : ndarray
+        [1D array] The frequencies.
+    opt : Dict, optional
+        Returned **if and only if** `return_opt==True`. Contains the parameters used by the wavelet transform.
     """
     verify_parameter(wavelet, possible_values=["Lognorm", "Bump", "Morlet"])
     verify_parameter(implementation, possible_values=["matlab", "python"])

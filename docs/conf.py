@@ -17,13 +17,14 @@ os.chdir(os.path.abspath(os.path.dirname(__file__)))
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath(".."))
 
-
 # -- Project information -----------------------------------------------------
 
 project = "PyMODAlib"
 copyright = "2020, Lancaster University Physics"
-author = "Pavle Boškoski; Dmytro Iatsenko; Gemma Lancaster; Sam McCormack; Julian Newman; Guru Vamsi Policharla; Valentina Ticcinelli; Lawrence Sheppard; Tomislav Stankovski; Aneta Stefanovska"
-
+author = (
+    "Pavle Boškoski; Dmytro Iatsenko; Gemma Lancaster; Sam McCormack; Julian Newman; Guru Vamsi Policharla; "
+    "Valentina Ticcinelli; Lawrence Sheppard; Tomislav Stankovski; Aneta Stefanovska"
+)
 
 # -- General configuration ---------------------------------------------------
 
@@ -43,6 +44,7 @@ extensions = [
 napoleon_google_docstring = False
 napoleon_use_param = False
 napoleon_use_ivar = True
+napoleon_numpy_docstring = True
 
 apidoc_module_dir = "../pymodalib"
 apidoc_output_dir = "source"
@@ -57,7 +59,6 @@ templates_path = ["_templates"]
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-
 
 # -- Options for HTML output -------------------------------------------------
 

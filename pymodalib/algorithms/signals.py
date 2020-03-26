@@ -28,21 +28,28 @@ from pymodalib.implementations.python.signals.preprocessing import preprocess_im
 
 
 class ResamplingException(Exception):
-    """
-    Exception which may be thrown while resampling.
-    """
+    """ """
 
 
 def resampl_flow(
     signal: ndarray, original_freq: float, resample_freq: float
 ) -> ndarray:
     """
-    Down-samples a signal, using a moving average.
+    Down-samples a signal, using a moving-average.
 
-    :param signal: the signal to down-sample
-    :param original_freq: the original sampling frequency of the signal
-    :param resample_freq: the sampling frequency of the down-sampled signal
-    :return: the down-sampled signal
+    Parameters
+    ----------
+    signal : ndarray
+        [1D array] The signal to down-sample.
+    original_freq : float
+        The original sampling frequency of the signal.
+    resample_freq : float
+        The sampling frequency of the down-sampled signal.
+
+    Returns
+    -------
+    ndarray
+        [1D array] The down-sampled signal.
     """
     try:
         x, y = signal.shape
@@ -82,10 +89,21 @@ def preprocess(
     """
     Pre-processes a signal, performing filtering and de-trending.
 
-    :param signal: the signal to pre-process
-    :param fs: the sampling frequency
-    :param fmin: the minimum frequency
-    :param fmax: the maximum frequency
-    :return: the pre-processed signal as a new ndarray
+    Parameters
+    ----------
+    signal : ndarray
+        [1D array] The signal to pre-process.
+    fs : float
+        The sampling frequency of the signal.
+    fmin : float, optional
+        The minimum frequency for filtering.
+    fmax : float, optional
+        The maximum frequency for filtering.
+
+    Returns
+    -------
+    ndarray
+        [1D array] The pre-processed signal.
+
     """
     return preprocess_impl(signal, fs, fmin, fmax)
