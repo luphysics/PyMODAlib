@@ -4,15 +4,37 @@
 [![License: GPL](https://img.shields.io/badge/License-GPLv3-10b515.svg)](https://github.com/luphysics/PyMODAlib/blob/master/LICENSE)
 [![PyPI: version](https://img.shields.io/pypi/v/PyMODAlib)](https://pypi.org/project/PyMODAlib)
 [![PyPI: Python version](https://img.shields.io/pypi/pyversions/PyMODAlib)](https://pypi.org/project/PyMODAlib)
+[![Documentation Status](https://readthedocs.org/projects/pymodalib/badge/?version=latest)](https://pymodalib.readthedocs.io/en/latest/?badge=latest)
 [![Code style: Black](https://img.shields.io/badge/code_style-black-black)](https://github.com/psf/black)
+
+## Introduction
 
 PyMODAlib is a Python library containing the algorithms used by [PyMODA](https://github.com/luphysics/PyMODA). With PyMODAlib, you can write Python scripts to perform the same calculations as PyMODA.
 
 Some of PyMODAlib's algorithms are MATLAB-packaged libraries, while some are Python translations of algorithms belonging to [MODA](https://github.com/luphysics/MODA).
 
+### License
+
+You may use, distribute and modify this software under the terms of the [GNU General Public License v3.0](https://opensource.org/licenses/GPL-3.0). See [LICENSE](/LICENSE).
+
+### References and citations
+
+To cite PyMODAlib or view its references, please see the DOI at [Zenodo](https://zenodo.org/record/3726673).
+
 ## User Guide
 
-This section describes how to use PyMODAlib in your Python scripts.
+This section describes how to get started with PyMODAlib. 
+
+For a full API reference, please see PyMODAlib's [ReadTheDocs](https://pymodalib.readthedocs.io/) page, which shows the parameters and output for every function.
+
+### Prerequisites
+
+The following software is required to use all of PyMODAlib's functionality:
+
+- Python 3.6 or higher.
+- MATLAB Runtime, version 9.6. 
+
+> **Note:** PyMODAlib can be used without the MATLAB Runtime, but some functions require it.
 
 ### Installing PyMODAlib
 
@@ -26,7 +48,7 @@ pip install pymodalib
 
 ### Updating PyMODAlib
 
-PyMODAlib may be updated regularly. To update your installed version, open a terminal and run:
+PyMODAlib will be updated regularly. To update your installed version, open a terminal and run:
 
 ```bash
 pip install -U pymodalib
@@ -42,9 +64,9 @@ pip install -U pymodalib
 - Detecting harmonics.
 - Downsampling.
 
-### Getting started
+> :warning: Some functions may not be fully stable, and may change before `v1.0.0`.
 
-For a full API reference, please see [https://pymodalib.readthedocs.io/](https://pymodalib.readthedocs.io/). This shows the available parameters and output for every function.
+### Getting started
 
 #### Examples
 
@@ -60,11 +82,11 @@ To try the examples, download the PyMODAlib repository [as a zip file](https://g
 
 ### PyMODAlib cache
 
-The group coherence functions use a very large quantity of RAM. To mitigate this problem for machines with smaller RAM capacities, they will allocate arrays which are cached to disk. This may result in significant disk usage.
+The group coherence functions use a very large quantity of RAM. To mitigate this problem for machines with smaller RAM capacities, they will allocate arrays which are cached to disk. *This may result in significant disk usage.*
 
-By default, PyMODAlib will use a folder named `.pymodalib` inside your home directory for its cache. However, it will show a `RuntimeWarning` unless you set the location manually.
+By default, PyMODAlib will use a folder named `.pymodalib` inside your home directory for its cache. However, it will show a `RuntimeWarning` unless you set the location manually. This warning is intended to make users aware of the risks of placing the cache folder on an SSD.
 
-> :warning: If the cache folder is on an SSD, it **may reduce the lifespan of the SSD**.
+> :warning: If the cache folder is on an SSD, it may **reduce the lifespan** of the SSD.
 
 #### Setting the cache location
 
@@ -93,10 +115,6 @@ Run the following commands, replacing `<cache_folder>` with the absolute path to
 echo "export PYMODALIB_CACHE=<cache_folder>" >> ~/.bash_profile
 source ~/.bash_profile
 ```
-
-### License
-
-You may use, distribute and modify this software under the terms of the [GNU General Public License v3.0](https://opensource.org/licenses/GPL-3.0). See [LICENSE](/LICENSE).
 
 ## Developer guide
 
@@ -154,7 +172,11 @@ The public-facing API is located in the `algorithms` package. This package conta
 
 This structure allows the implementation to be easily changed, while ensuring that the API remains backwards-compatible.
 
-#### Implementations
+#### `__init__.py`
+
+In `pymodalib.__init__.py`, many functions are imported from the `algorithms` package. This allows users to more easily find useful functions: for example, they can use `pymodalib.wavelet_transform` instead of `pymodalib.algorithms.wavelet.wavelet_transform`.
+
+#### `implementations` package
 
 The `implementations` package contains a `matlab` package and a `python` package. The `matlab` package contains wrappers for algorithms supplied by MATLAB-packaged libraries, while the `python` package contains algorithms implemented purely in Python.
 
