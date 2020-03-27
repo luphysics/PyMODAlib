@@ -19,7 +19,7 @@ You may use, distribute and modify this software under the terms of the [GNU Gen
 
 ### References and citations
 
-To cite PyMODAlib or view its references, please see the DOI at [Zenodo](https://zenodo.org/record/3726673).
+To cite PyMODAlib or view its references, please see the DOI at [Zenodo](https://zenodo.org/badge/latestdoi/243930888).
 
 ## User Guide
 
@@ -29,12 +29,9 @@ For a full API reference, please see PyMODAlib's [ReadTheDocs](https://pymodalib
 
 ### Prerequisites
 
-The following software is required to use all of PyMODAlib's functionality:
+PyMODAlib requires Python 3.6 or higher. Some features also require the MATLAB Runtime, version 9.6.
 
-- Python 3.6 or higher.
-- MATLAB Runtime, version 9.6. 
-
-> **Note:** PyMODAlib can be used without the MATLAB Runtime, but some functions require it.
+> **Note:** See [current status](#current-status) to check which functions require the MATLAB Runtime.
 
 ### Installing PyMODAlib
 
@@ -58,11 +55,13 @@ pip install -U pymodalib
 
 `PyMODAlib` is still in development. Currently, the features implemented are:
 
-- Wavelet transform.
-- Wavelet phase coherence.
-- Group coherence for one or two groups, with inter-subject surrogates.
-- Detecting harmonics.
-- Downsampling.
+| Feature | Implemented | Requires MATLAB Runtime | Notes |
+| --- | --- | --- | --- |
+| Wavelet transform | :heavy_check_mark: | No | Pass `implementation="python"` to use Python implementation | 
+| Wavelet phase coherence | :heavy_check_mark: | No | | 
+| Group coherence | :heavy_check_mark: | No | Pass `implementation="python"` to use Python implementation | 
+| Detecting harmonics | :heavy_check_mark: | No | |
+| Downsampling | :heavy_check_mark: | No | | 
 
 > :warning: Some functions may not be fully stable, and may change before `v1.0.0`.
 
@@ -92,29 +91,39 @@ By default, PyMODAlib will use a folder named `.pymodalib` inside your home dire
 
 To set the location of the cache folder manually, use the `PYMODALIB_CACHE` environment variable. Instructions for different operating systems are below.
 
+***The cache location should be set to an empty folder which resides on an HDD.***
+
 ##### Windows
 
-On Windows, press the start button and type "environment" until you can select "Edit the system environment variables". Then click "Environment variables" and click "New" in the window which appears. Name it "PYMODALIB_CACHE" and set the location by browsing for a folder.
-
-Now restart your IDE or terminal.
+- Create a folder to use for the cache. 
+- Press the start button and type "environment" until the option "Edit the system environment variables" appears, and click it. 
+- Click "Environment variables" near the bottom right of the dialog.
+- Click "New" in the "System variables" section of the window which appears. 
+- In the dialog which opens, enter "PYMODALIB_CACHE" as the variable name and click "Browse Directory" to choose the folder you created.
+- Press "Ok" to close all dialogs.
+- Restart your IDE and/or terminal.
 
 ##### Linux
 
-Run the following commands, replacing `<cache_folder>` with the absolute path to your chosen folder:
+Create a folder to use for the cache. Open a terminal and `cd` to the folder, then copy the following commands into the terminal:
 
 ```bash
-echo "export PYMODALIB_CACHE=<cache_folder>" >> ~/.bashrc
+echo "export PYMODALIB_CACHE=$(pwd)" >> ~/.bashrc
 source ~/.bashrc
 ```
 
+You may need to restart your IDE and any other open terminals.
+
 ##### macOS 
 
-Run the following commands, replacing `<cache_folder>` with the absolute path to your chosen folder:
+Create a folder to use for the cache. Open a terminal and `cd` to the folder, then copy the following commands into the terminal:
 
 ```bash
-echo "export PYMODALIB_CACHE=<cache_folder>" >> ~/.bash_profile
+echo "export PYMODALIB_CACHE=$(pwd)" >> ~/.bash_profile
 source ~/.bash_profile
 ```
+
+You may need to restart your IDE and any other open terminals.
 
 ## Developer guide
 
@@ -130,12 +139,12 @@ Open a terminal in the `PyMODAlib` folder and run:
 
 ```bash
 pip install -r requirements.txt
-pip install matplotlib pre-commit
+pip install pre-commit
 ```
 
 ### Git hooks
 
-Git hooks are used to automatically format modified Python files with `black` when a commit is made. This ensures that the code follows a uniform style.
+Git hooks are used to automatically format modified Python files with [Black](https://github.com/psf/black) when a commit is made. This ensures that the code follows a uniform style.
 
 To install the Git hooks, open a terminal in the `PyMODAlib` folder and run:
 
@@ -179,6 +188,14 @@ In `pymodalib.__init__.py`, many functions are imported from the `algorithms` pa
 #### `implementations` package
 
 The `implementations` package contains a `matlab` package and a `python` package. The `matlab` package contains wrappers for algorithms supplied by MATLAB-packaged libraries, while the `python` package contains algorithms implemented purely in Python.
+
+### "Gotchas"
+
+When importing a function/package from another part of `pymodalib`, your IDE may auto-import the package without the `pymodalib` prefix. For example, `pymodalib.algorithms.wavelet` may be imported as `algorithms.wavelet`. This can cause some confusing errors.
+
+For reliable uninstall behaviour, don't run `python setup.py install`. The command listed above, using `pip`, is more reliable. To install PyMODAlib from source without using editable mode, you can run `pip install .`.
+
+Don't install the library from source if your terminal has navigated to the folder via a symlink. 
 
 ### MATLAB-packaged libraries
 
