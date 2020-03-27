@@ -13,13 +13,16 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+"""
+Example of using the Python implementation of the wavelet transform.
+"""
+
 import os
 import platform
 
 import numpy
 import numpy as np
-
-from pymodalib.algorithms.wavelet import wavelet_transform
+import pymodalib
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
@@ -29,14 +32,18 @@ if __name__ == "__main__":
     fs = 10
     times = np.arange(0, signal.size / fs, 1 / fs)
 
-    wt, freq = wavelet_transform(
-        signal, fs, cut_edges=True, return_opt=False, implementation="python"
+    wt, freq = pymodalib.wavelet_transform(
+        signal, fs, cut_edges=True, implementation="python"
     )
+
+    # Save results to a data file.
     numpy.savez("output", wt=wt, freq=freq, times=times, implementation="Python")
 
     if platform.system() != "Linux":
+        # Plot the result by importing the plotting script.
         import plot_wavelet
 
+        # Prevents Pycharm from cleaning up the import statement.
         dummy_variable = plot_wavelet
     else:
         print(
