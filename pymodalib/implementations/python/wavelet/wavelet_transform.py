@@ -16,6 +16,7 @@
 """
 Python implementation of the wavelet transform function.
 """
+import multiprocessing
 import warnings
 
 import scipy.integrate
@@ -307,24 +308,34 @@ def wavelet_transform(
     if padding == "predictive":
         pow = (-(L / fs - np.arange(1, L + 1) / fs)) / (wp.t2h - wp.t1h)
         w = 2 ** pow
-        padleft = fcast(
-            np.flip(signal),
-            fs,
-            n1,
-            [max([fmin, fs / L]), fmax],
-            min([np.ceil(SN / 2) + 5, np.round(L / 3)]),
-            w,
-        )
+
+        # Create pool for calculating in parallel.
+        pool = multiprocessing.Pool()
+
+        # Create arguments to pass to Pool.
+        args = [
+            (
+                np.flip(signal),
+                fs,
+                n1,
+                [max([fmin, fs / L]), fmax],
+                min([np.ceil(SN / 2) + 5, np.round(L / 3)]),
+                w,
+            ),
+            (
+                signal,
+                fs,
+                n2,
+                [max([fmin, fs / L]), fmax],
+                min([np.ceil(SN / 2) + 5, np.round(L / 3)]),
+                w,
+            ),
+        ]
+
+        # Calculate 'padleft' and 'padright' in parallel using Pool.
+        padleft, padright = pool.starmap(fcast, args)
 
         padleft = np.flip(padleft)
-        padright = fcast(
-            signal,
-            fs,
-            n2,
-            [max([fmin, fs / L]), fmax],
-            min([np.ceil(SN / 2) + 5, np.round(L / 3)]),
-            w,
-        )
         dflag = 1
     else:
         padleft = []
@@ -1702,7 +1713,7 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
         if not isempty(rw):
             FM = FM * (rw.T * np.ones((1, 3)))
 
-        nb = backslash(FM, Y.T)  # level3
+        nb = backslash(FM, Y.T)
 
         s = FM @ nb
         nerr = np.std(Y - s)
@@ -1710,7 +1721,7 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
         df = FTol
         perr = np.inf
         while nerr < perr:
-            if abs(nf - fs / 2 + FTol) < eps:  # level3 eps
+            if abs(nf - fs / 2 + FTol) < eps:
                 break
 
             pf = nf
