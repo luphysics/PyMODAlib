@@ -30,3 +30,16 @@ def matlabwrapper(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+def deprecated(func):
+    """
+    Decorator that marks a function as deprecated, i.e. that it should no
+    longer be used and will be removed in future.
+    """
+
+    def wrapper(*args, **kwargs):
+        print(f"Warning: calling deprecated function '{func.__name__}'.")
+        return func(*args, **kwargs)
+
+    return wrapper

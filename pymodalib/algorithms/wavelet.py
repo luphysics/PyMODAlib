@@ -22,12 +22,6 @@ from typing import Union, Tuple, Dict
 
 from numpy import ndarray
 
-from pymodalib.implementations.matlab.wavelet.wavelet_transform import (
-    wavelet_transform as matlab_impl,
-)
-from pymodalib.implementations.python.wavelet.wavelet_transform import (
-    wavelet_transform as python_impl,
-)
 from pymodalib.utils.parameters import verify_parameter, BadParametersException
 
 
@@ -75,6 +69,7 @@ def wavelet_transform(
     implementation : {"matlab", "python"}, optional
          (Default value = "matlab") Whether to use the MATLAB implementation, or the Python implementation.
          The MATLAB implementation requires the MATLAB Runtime.
+         **When the Python implementation is stable, the default value of this parameter will be changed.**
     padding: str
          (Default value = "predictive") The type of padding to use when calculating the transform.
     fstep: str
@@ -99,20 +94,41 @@ def wavelet_transform(
     verify_parameter(implementation, possible_values=["matlab", "python"])
 
     if implementation == "python":
-        wt, freq, opt = python_impl(
-            signal,
-            fs,
-            fmin,
-            fmax,
-            resolution,
-            cut_edges,
-            wavelet,
-            preprocess,
-            rel_tolerance,
+        from pymodalib.implementations.python.wavelet.wavelet_transform import (
+            LognormWavelet,
+            MorletWavelet,
+            wavelet_transform as python_impl,
+        )
+
+        if wavelet == "Lognorm":
+            wp = LognormWavelet(resolution)
+        elif wavelet == "Morlet":
+            wp = MorletWavelet(resolution)
+        elif wavelet == "Bump":
+            raise NotImplementedError("Bump wavelet is not implemented yet.")
+        else:
+            raise ValueError(f"Unknown 'wavelet': {wavelet}")
+
+        # TODO: get 'opt'.
+        wt, freq = python_impl(
+            signal=signal,
+            fs=fs,
+            wp=wp,
+            fmin=fmin,
+            fmax=fmax,
+            cut_edges=cut_edges,
+            preprocess=preprocess,
+            padding=padding,
+            fstep=fstep,
+            rel_tolerance=rel_tolerance,
             *args,
             **kwargs,
         )
     elif implementation == "matlab":
+        from pymodalib.implementations.matlab.wavelet.wavelet_transform import (
+            wavelet_transform as matlab_impl,
+        )
+
         wt, freq, opt = matlab_impl(
             signal=signal,
             fs=fs,
@@ -133,7 +149,7 @@ def wavelet_transform(
             f"Parameter 'implementation' must be one of: {['matlab', 'python']}."
         )
 
-    if return_opt:
+    if return_opt and implementation != "python":
         return wt, freq, opt
 
     return wt, freq
