@@ -32,7 +32,7 @@ if __name__ == "__main__":
     wt, freq = wavelet_transform(
         signal, fs, cut_edges=True, return_opt=False, implementation="python"
     )
-    numpy.savez("output", wt=wt, freq=freq, times=times)
+    numpy.savez("output", wt=wt, freq=freq, times=times, implementation="Python")
 
     if platform.system() != "Linux":
         import plot_wavelet

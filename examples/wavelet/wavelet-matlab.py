@@ -30,7 +30,7 @@ if __name__ == "__main__":
     times = np.arange(0, signal.size / fs, 1 / fs)
 
     wt, freq = wavelet_transform(signal, fs, cut_edges=True, return_opt=False)
-    numpy.savez("output", wt=wt, freq=freq, times=times)
+    numpy.savez("output", wt=wt, freq=freq, times=times, implementation="MATLAB")
 
     if platform.system() != "Linux":
         import plot_wavelet
