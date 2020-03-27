@@ -20,7 +20,7 @@ from typing import List
 
 from setuptools import setup
 
-VERSION = "0.3.0b1"
+VERSION = "0.4.0b1"
 
 here = path.abspath(path.dirname(__file__))
 os.chdir(here)
