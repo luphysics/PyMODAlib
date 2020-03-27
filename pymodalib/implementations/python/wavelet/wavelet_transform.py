@@ -14,9 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-Python implementation of the wavelet tranform function.
-
-Not fully stable yet.
+Python implementation of the wavelet transform function.
 """
 import warnings
 
@@ -251,27 +249,6 @@ def wavelet_transform(
     f0 = wp.f0
     if wp.has_twf:
         twf = wp.twf
-    """
-    if window == "Lognorm":
-        q = twopi * f0
-        wp = LognormWavelet(f0)
-        #fwt = lambda xi: np.exp(-(q ** 2 / 2) * log(xi) ** 2)
-
-        #FIX THIS!!
-        fwt = wp.fwt#lambda xi: np.exp(-(q ** 2 / 2) * (-np.inf if xi<=0 else np.log(xi)) ** 2)
-        if wp.has_twf:
-          twf = wp.twf
-
-    # TODO: Implement these later
-    elif window == "Morlet":
-        pass
-    elif window == "Bump":
-        pass
-    elif window == "Morse":
-        pass
-    else:
-        on_error(f"Invalid window name: {window}")
-    """
 
     if rec_flag == 1:
         if disp_mode:

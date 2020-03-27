@@ -18,10 +18,9 @@
 Wavelet transform.
 """
 
-from typing import Union, Tuple, Dict
+from typing import Tuple
 
 from numpy import ndarray
-
 from pymodalib.utils.parameters import verify_parameter, BadParametersException
 
 
@@ -41,9 +40,13 @@ def wavelet_transform(
     return_opt: bool = False,
     *args,
     **kwargs,
-) -> Union[Tuple[ndarray, ndarray], Tuple[ndarray, ndarray, Dict]]:
+) -> Tuple[ndarray, ndarray]:
     """
     Wavelet transform function.
+
+    .. note::
+        If `return_opt == True`, a dictionary will be returned in addition to the normal return values.
+        This dictionary contains parameters used by the function.
 
     Parameters
     ----------
@@ -69,7 +72,8 @@ def wavelet_transform(
     implementation : {"matlab", "python"}, optional
          (Default value = "matlab") Whether to use the MATLAB implementation, or the Python implementation.
          The MATLAB implementation requires the MATLAB Runtime.
-         **When the Python implementation is stable, the default value of this parameter will be changed.**
+         **When the Python implementation is considered fully stable, the default value of this
+         parameter will be changed.**
     padding: str
          (Default value = "predictive") The type of padding to use when calculating the transform.
     fstep: str
@@ -84,11 +88,9 @@ def wavelet_transform(
     Returns
     -------
     wt : ndarray
-        [2D array] The wavelet transform .
+        [2D array, complex] The wavelet transform.
     freq : ndarray
         [1D array] The frequencies.
-    opt : Dict, optional
-        Returned **if and only if** `return_opt==True`. Contains the parameters used by the wavelet transform.
     """
     verify_parameter(wavelet, possible_values=["Lognorm", "Bump", "Morlet"])
     verify_parameter(implementation, possible_values=["matlab", "python"])
