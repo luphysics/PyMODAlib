@@ -52,6 +52,10 @@ apidoc_excluded_paths = ["tests"]
 apidoc_separate_modules = True
 apidoc_extra_args = ["-f"]
 
+# Make functions show as their name without their module name, e.g. "wavelet_transform"
+# instead of "pymodalib.algorithms.wavelet.wavelet_transform".
+add_module_names = False
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
