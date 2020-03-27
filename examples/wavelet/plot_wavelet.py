@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-load = np.load("output.npz", allow_pickle=True)
+load = np.load("output.npz")
 
 wt = load.get("wt")
 freq = load.get("freq")

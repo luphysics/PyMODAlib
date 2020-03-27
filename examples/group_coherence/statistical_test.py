@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # Change working directory to where this file is saved.
     os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-    data = np.load("output.npz", allow_pickle=True)
+    data = np.load("output.npz")
     freq = data.get("freq")
     coh1 = data.get("coh1")
     coh2 = data.get("coh2")

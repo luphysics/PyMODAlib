@@ -29,7 +29,7 @@ if __name__ == "__main__":
     fs = 10
     times = np.arange(0, signal.size / fs, 1 / fs)
 
-    wt, freq = wavelet_transform(signal, fs, return_opt=False)
+    wt, freq = wavelet_transform(signal, fs, cut_edges=True, return_opt=False)
     numpy.savez("output", wt=wt, freq=freq, times=times)
 
     if platform.system() != "Linux":
