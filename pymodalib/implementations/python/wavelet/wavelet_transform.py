@@ -226,6 +226,7 @@ def wavelet_transform(
     disp_mode: bool = False,
     cut_edges: bool = False,
     nv: int = None,
+    return_opt: bool = False,
 ):
     try:
         x, y = signal.shape
@@ -303,7 +304,6 @@ def wavelet_transform(
         n1 = np.floor((NL - L) * coib1[0] / (coib1[0] + coib2[0]))
         n2 = np.ceil((NL - L) * coib1[0] / (coib1[0] + coib2[0]))
 
-    # TODO: check from here.
     if padding == "predictive":
         pow = (-(L / fs - np.arange(1, L + 1) / fs)) / (wp.t2h - wp.t1h)
         w = 2 ** pow
@@ -423,11 +423,31 @@ def wavelet_transform(
             )
         ] = np.nan
 
+    if return_opt:
+        if isinstance(fmin, ndarray):
+            try:
+                fmin = fmin[0, 0]
+                nv = nv[0]
+            except:
+                pass
+
+        opt = {
+            "fmin": fmin,
+            "fmax": fmax,
+            "f0": wp.f0,
+            "preprocess": preprocess,
+            "nv": nv,
+            "cut_edges": cut_edges,
+            "fs": fs,
+            "padding": padding,
+            "rel_tolerance": rel_tolerance,
+        }
+        return WT, freq, opt
+
     return WT, freq
 
 
 def parcalc(racc, L, wp, fwt, twf, disp_mode, f0, fmax, wavelet="Lognorm", fs=-1):
-    # TODO: function checked
     racc = min([racc, 1 - 10 ** -6])
     ctol = max([racc / 1000, 10 ** -12])  # parameter of numerical accuracy
     MIC = max([10000, 10 * L])  # max interval count
@@ -523,14 +543,15 @@ def parcalc(racc, L, wp, fwt, twf, disp_mode, f0, fmax, wavelet="Lognorm", fs=-1
             AC = fwt(cx0)
 
         if AC > 10 ** -12:
-            print(
+            warnings.warn(
                 """--------------------------------------------- Warning! 
             ---------------------------------------------\n Wavelet does not seem to be admissible (its Fourier 
             transform does not vanish at zero frequency)!\n Parameters estimated from its frequency domain form, 
             e.g. integration constant Cpsi (which is \n infinite for non-admissible wavelets), cannot be estimated 
             appropriately (the same concerns the \n number-of-voices ''nv'', when set to ''auto'', so frequency 
             discretization might be also not appropriate).\n It is recommended to use only admissible wavelets.\n 
-            ----------------------------------------------------------------------------------------------------\n"""
+            ----------------------------------------------------------------------------------------------------\n""",
+                WaveletWarning,
             )
 
         QQ, wflag, xx, ss = sqeps(
@@ -883,10 +904,10 @@ def parcalc(racc, L, wp, fwt, twf, disp_mode, f0, fmax, wavelet="Lognorm", fs=-1
 
             AC = AC1 + AC2 + AC3 + AC4
 
-            # Accodding to the matlab documentation how the comparison of numbers is implemented.
+            # According to the matlab documentation how the comparison of numbers is implemented.
             # https://stackoverflow.com/questions/26371634/comparison-of-complex-numbers-in-matlab
             if np.real(AC) > 10 ** -8:
-                print("WARNING: wavelet does not seem to be admissible.")
+                warnings.warn("Wavelet does not seem to be admissible.", WaveletWarning)
 
             if isempty(fwt):
                 compeak = wp.ompeak
@@ -1040,8 +1061,9 @@ def parcalc(racc, L, wp, fwt, twf, disp_mode, f0, fmax, wavelet="Lognorm", fs=-1
                 Eest = 1 / CT * sum(Efwt)
 
                 if (abs(Etot - Eest) + Iest1 + Iest2) / Etot > 0.01:
-                    print(
-                        "WARNING: Cannot accurately invert the specified time-domain form..."
+                    warnings.warn(
+                        "Cannot accurately invert the specified time-domain form...",
+                        WaveletWarning,
                     )
 
                 Cfwt = Cfwt[1:CNq]
@@ -1195,8 +1217,9 @@ def parcalc(racc, L, wp, fwt, twf, disp_mode, f0, fmax, wavelet="Lognorm", fs=-1
             wp.t2h = ss[1, 1]
 
             if wflag == 1:
-                print(
-                    "WARNING: The time-domain wavelet function is not well behaved..."
+                warnings.warn(
+                    "The time-domain wavelet function is not well behaved...",
+                    WaveletWarning,
                 )
 
 
@@ -1752,7 +1775,7 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
             tb = backslash(FM, Y.T)
             terr = np.std(Y.T - FM * tb.T)
 
-            if terr < cerr[1] and tf < cf[1]:  # TODO: fix all indices
+            if terr < cerr[1] and tf < cf[1]:  # TODO: fix all indices?
                 cf = [cf[0], tf, cf[1]]
                 cerr = [cerr[0], terr, cerr[1]]
                 cb = [cb[0], tb[:], cb[:2]]
@@ -1845,7 +1868,7 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
             tb = np.linalg.lstsq(FM, Y)
             terr = np.std(Y - FM * tb)
 
-            if terr < cerr[2] and tf < cf[2]:  # TODO: fix all indices
+            if terr < cerr[2] and tf < cf[2]:  # TODO: fix all indices?
                 cf = [cf[1], tf, cf[2]]
                 cerr = [cerr(1), terr, cerr(2)]
                 cb = [cb[1], tb[:], cb[:2]]
@@ -1928,7 +1951,7 @@ def aminterp(X, Y, Z, XI, YI, method):
     ZI = np.zeros(np.size(Z, 1), len(XI)) * np.NaN
     xstep = np.mean(np.diff(XI))
     xind = 1 + np.floor((1 / 2) + (X - XI(1)) / xstep)
-    xpnt = np.asarray([[0], [0], [0]])  # level3 TODO: add later
+    xpnt = np.asarray([[0], [0], [0]])  # TODO: add later?
 
     if method == "max":
         for xn in range(1, len(xpnt)):
@@ -1945,7 +1968,7 @@ def aminterp(X, Y, Z, XI, YI, method):
     ZI = np.zeros(len(YI), np.size(Z, 2)) * np.NaN
     ystep = np.mean(np.diff(YI))
     yind = 1 + np.floor((1 / 2) + (Y - YI(1)) / ystep)
-    ypnt = [[0], [0], [0]]  # level3 TODO: add later
+    ypnt = [[0], [0], [0]]  # TODO: add later?
 
     if method == "max":
         for yn in range(1, len(ypnt)):

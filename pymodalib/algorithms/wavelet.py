@@ -21,6 +21,7 @@ Wavelet transform.
 from typing import Tuple
 
 from numpy import ndarray
+
 from pymodalib.utils.parameters import verify_parameter, BadParametersException
 
 
@@ -109,10 +110,9 @@ def wavelet_transform(
         elif wavelet == "Bump":
             raise NotImplementedError("Bump wavelet is not implemented yet.")
         else:
-            raise ValueError(f"Unknown 'wavelet': {wavelet}")
+            raise ValueError(f"Unknown wavelet: '{wavelet}'")
 
-        # TODO: get 'opt'.
-        wt, freq = python_impl(
+        result = python_impl(
             signal=signal,
             fs=fs,
             wp=wp,
@@ -123,9 +123,16 @@ def wavelet_transform(
             padding=padding,
             fstep=fstep,
             rel_tolerance=rel_tolerance,
+            return_opt=return_opt,
             *args,
             **kwargs,
         )
+
+        if return_opt:
+            wt, freq, opt = result
+        else:
+            wt, freq = result
+
     elif implementation == "matlab":
         from pymodalib.implementations.matlab.wavelet.wavelet_transform import (
             wavelet_transform as matlab_impl,
@@ -151,7 +158,7 @@ def wavelet_transform(
             f"Parameter 'implementation' must be one of: {['matlab', 'python']}."
         )
 
-    if return_opt and implementation != "python":
+    if return_opt:
         return wt, freq, opt
 
     return wt, freq
