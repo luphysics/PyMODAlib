@@ -21,9 +21,18 @@ from numpy import ndarray
 
 def matlab_to_numpy(arr) -> ndarray:
     """
-    Converts a matlab array to a numpy array.
-    Can be much faster than simply calling "np.asarray()",
-    but does not appear to be faster for complex arrays.
+    Converts a matlab array to a numpy array. Can be much faster than simply calling "np.asarray()",
+    for real arrays.
+
+    Parameters
+    ----------
+    arr : array_like
+        The MATLAB array to convert.
+
+    Returns
+    -------
+    ndarray:
+        The array, converted to a Numpy array.
     """
     try:
         # Should work for real arrays, maybe not for complex arrays.
@@ -36,15 +45,23 @@ def matlab_to_numpy(arr) -> ndarray:
 def multi_matlab_to_numpy(*args) -> List[ndarray]:
     """
     Converts multiple matlab arrays to numpy arrays using `matlab_to_numpy()`.
+
+    This allows code like the following:
+
+    `x, y = multi_matlab_to_numpy(x, y)`
+
+    Parameters
+    ----------
+    args : array_like
+        The arrays to convert.
+
+    Returns
+    -------
+    List[ndarray]
+        Ordered list containing the Numpy equivalent of each MATLAB array.
     """
     out = []
     for arr in args:
         out.append(matlab_to_numpy(arr))
 
     return out
-
-
-class MatlabLibraryException(Exception):
-    """
-    Exception raised when a MATLAB-packaged library is missing.
-    """

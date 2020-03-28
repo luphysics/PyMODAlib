@@ -29,18 +29,32 @@ platform = Platform.get()
 regexp = re.compile("v[0-9]{2}")
 
 
-def is_runtime_valid() -> bool:
-    warnings.warn(
-        f"Skipping a check for the validity of the MATLAB Runtime, "
-        f"because this functionality is not fully implemented yet.",
-        RuntimeWarning,
-    )
-    # versions = get_matlab_runtime_versions()
-    # return any([v == MATLAB_RUNTIME_VERSION for v in versions])
-    return True  # TODO: fix this function
+def is_runtime_valid(versions: List[int]) -> bool:
+    """
+    Checks whether any of the currently installed MATLAB Runtime versions is valid.
+
+    Parameters
+    ----------
+    versions : List[int]
+        All the currently installed MATLAB Runtime versions, as their version numbers.
+
+    Returns
+    -------
+    bool
+        Whether a compatible MATLAB Runtime is installed.
+    """
+    return any([v == MATLAB_RUNTIME_VERSION for v in versions])
 
 
 def get_matlab_runtime_versions() -> List[int]:
+    """
+    Gets all the installed MATLAB Runtime versions which can be found.
+
+    Returns
+    -------
+    List[int]
+        List containing every MATLAB Runtime version which is installed, as their version numbers (e.g. 96).
+    """
     versions = []
 
     for var in get_path_items(platform):
@@ -57,12 +71,26 @@ def get_matlab_runtime_versions() -> List[int]:
                 f"or switch to the pure-Python implementations where possible."
             )
 
-        versions.append(version)
+        if version:
+            versions.append(version)
 
     return versions
 
 
 def get_path_items(platform: Platform) -> List[str]:
+    """
+    Gets all items from the system PATH.
+
+    Parameters
+    ----------
+    platform : Platform
+        The platform corresponding to OS.
+
+    Returns
+    -------
+    List[str]
+        List containing all the items on the system PATH.
+    """
     if platform is Platform.WINDOWS:
         path: str = os.environ.get("path")
     else:
@@ -86,19 +114,36 @@ def get_runtime_version_windows(var: str) -> Optional[int]:
 
 
 def get_runtime_version_linux(var: str) -> Optional[int]:
-    raise NotImplementedError("Linux not implemented yet.")
+    warnings.warn(
+        f"Trying to check the MATLAB Runtime version, but this isn't implemented for Linux yet."
+    )
+    return MATLAB_RUNTIME_VERSION
 
 
 def get_runtime_version_mac_os(var: str) -> Optional[int]:
-    raise NotImplementedError("macOS not implemented yet.")
-
-
-def raise_invalid_exception() -> None:
-    raise MatlabRuntimeException(
-        f"MATLAB Runtime is not installed or compatible. "
-        f"Please install version v{MATLAB_RUNTIME_VERSION}."
+    warnings.warn(
+        f"Trying to check the MATLAB Runtime version, but this isn't implemented for macOS yet."
     )
+    return MATLAB_RUNTIME_VERSION
 
 
-class MatlabRuntimeException(Exception):
-    pass
+class MatlabLibraryException(Exception):
+    """
+    Exception raised when a MATLAB-packaged library is missing.
+    """
+
+
+def get_link_to_runtime_docs() -> str:
+    """
+    Gets a link to the section of the MATLAB documentation which explains how to add the MATLAB Runtime to the PATH.
+
+    Returns
+    -------
+    str
+        The URL for the relevant page of the MATLAB documentation.
+    """
+    return {
+        Platform.WINDOWS.value: "https://uk.mathworks.com/help/matlab/matlab_external/building-and-running-engine-applications-on-windows-operating-systems.html",
+        Platform.LINUX.value: "https://uk.mathworks.com/help/matlab/matlab_external/set-run-time-library-path-on-linux-systems.html",
+        Platform.MAC_OS.value: "https://uk.mathworks.com/help/matlab/matlab_external/set-run-time-library-path-on-mac-systems.html",
+    }.get(platform.value)
