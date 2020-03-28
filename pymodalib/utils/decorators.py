@@ -13,23 +13,47 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 from pymodalib.utils import matlab_runtime
+from utils.matlab import MatlabLibraryException
 
 
-def matlabwrapper(func):
+def matlabwrapper(module):
     """
     Decorator which marks a MATLAB wrapper: a function which calls a function from a MATLAB-packaged library.
+
+    This will ensure that the required module is installed, and that the MATLAB Runtime is a valid version.
+
+    Parameters
+    ----------
+    module : str
+        The name of the MATLAB-packaged library which is being used.
     """
 
-    def wrapper(*args, **kwargs):
-        runtime_valid = matlab_runtime.is_runtime_valid()
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            import importlib.util
 
-        if not runtime_valid:
-            matlab_runtime.raise_invalid_exception()
+            module_valid = importlib.util.find_spec(module)
+            if not module_valid:
+                raise MatlabLibraryException(
+                    f"The MATLAB-packaged library '{module}' is not installed. Please install "
+                    f"PyMODA, which supplies the MATLAB-packaged libraries, "
+                    f"or check if there is a "
+                    f"pure-Python implementation by passing 'implementation=\"python\"' to "
+                    f"the function."
+                )
 
-        return func(*args, **kwargs)
+            runtime_valid = matlab_runtime.is_runtime_valid()
 
-    return wrapper
+            if not runtime_valid:
+                matlab_runtime.raise_invalid_exception()
+
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def deprecated(func):

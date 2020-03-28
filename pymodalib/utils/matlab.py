@@ -42,3 +42,9 @@ def multi_matlab_to_numpy(*args) -> List[ndarray]:
         out.append(matlab_to_numpy(arr))
 
     return out
+
+
+class MatlabLibraryException(Exception):
+    """
+    Exception raised when a MATLAB-packaged library is missing.
+    """

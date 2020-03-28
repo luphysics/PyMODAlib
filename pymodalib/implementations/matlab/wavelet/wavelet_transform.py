@@ -22,7 +22,7 @@ from pymodalib.utils.matlab import matlab_to_numpy
 from pymodalib.utils.parameters import sanitise, float_or_none
 
 
-@matlabwrapper
+@matlabwrapper(module="WT")
 def wavelet_transform(
     signal: ndarray,
     fs: float,
