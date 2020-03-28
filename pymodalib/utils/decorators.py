@@ -13,9 +13,16 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+import sys
 
 from pymodalib.utils import matlab_runtime
-from utils.matlab import MatlabLibraryException
+from pymodalib.utils.matlab import MatlabLibraryException
+
+# Python 3.7 is the highest supported version for MATLAB-packaged libraries.
+max_python_version = (
+    3,
+    7,
+)
 
 
 def matlabwrapper(module):
@@ -33,6 +40,15 @@ def matlabwrapper(module):
     def decorator(func):
         def wrapper(*args, **kwargs):
             import importlib.util
+
+            if sys.version_info[:2] > max_python_version:
+                raise MatlabLibraryException(
+                    f"MATLAB-packaged libraries are only supported on Python "
+                    f"{'.'.join([str(s) for s in max_python_version])} and below. "
+                    f"Please try using a compatible "
+                    f"version of Python, or check if there is a pure-Python implementation "
+                    f"by passing 'implementation=\"python\"' to the function."
+                )
 
             module_valid = importlib.util.find_spec(module)
             if not module_valid:
