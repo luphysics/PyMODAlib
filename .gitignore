@@ -1,5 +1,6 @@
 ### Manually added ###
 .idea/misc.xml
+.idea/vcs.xml
 .idea/pymoda-lib.iml
 
 .vscode/
