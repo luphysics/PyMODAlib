@@ -60,11 +60,7 @@ def get_matlab_runtime_versions() -> List[int]:
     for var in get_path_items(platform):
         if platform is Platform.WINDOWS:
             version = get_runtime_version_windows(var)
-        elif platform is Platform.LINUX:
-            version = get_runtime_version_linux(var)
-        elif platform is Platform.MAC_OS:
-            version = get_runtime_version_mac_os(var)
-        else:
+        elif platform is not Platform.LINUX and platform is not Platform.MAC_OS:
             raise Exception(
                 f"Operating system not recognised. "
                 f"Please use Windows, Linux or macOS for running MATLAB-packaged code "

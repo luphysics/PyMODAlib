@@ -15,8 +15,10 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 import sys
 
+from pymodalib.utils.Platform import Platform
+
 from pymodalib.utils import matlab_runtime
-from pymodalib.utils.matlab_runtime import MatlabLibraryException
+from pymodalib.utils.matlab_runtime import MatlabLibraryException, platform
 
 # Python 3.7 is the highest supported version for MATLAB-packaged libraries.
 max_python_version = (3, 7)
@@ -57,23 +59,24 @@ def matlabwrapper(module):
                     f"the function."
                 )
 
-            runtime_versions = matlab_runtime.get_matlab_runtime_versions()
-            if not runtime_versions:
-                raise MatlabLibraryException(
-                    f"The MATLAB Runtime is not installed. Please check the documentation "
-                    f"for the compatible version and install it."
-                )
+            if platform is Platform.WINDOWS:
+                runtime_versions = matlab_runtime.get_matlab_runtime_versions()
+                if not runtime_versions:
+                    raise MatlabLibraryException(
+                        f"The MATLAB Runtime is not installed. Please check the documentation "
+                        f"for the compatible version and install it."
+                    )
 
-            if not matlab_runtime.is_runtime_valid(runtime_versions):
-                raise MatlabLibraryException(
-                    f"A compatible MATLAB Runtime version could not be found. "
-                    f"Please check the documentation "
-                    f"and install the compatible version.\n"
-                    f"If you're seeing this error after installing a correct version, please "
-                    f"close and re-open "
-                    f"your IDE and/or terminals, and if the problem persists, set the Runtime "
-                    f"library path:\n{matlab_runtime.get_link_to_runtime_docs()}"
-                )
+                if not matlab_runtime.is_runtime_valid(runtime_versions):
+                    raise MatlabLibraryException(
+                        f"A compatible MATLAB Runtime version could not be found. "
+                        f"Please check the documentation "
+                        f"and install the compatible version.\n"
+                        f"If you're seeing this error after installing a correct version, please "
+                        f"close and re-open "
+                        f"your IDE and/or terminals, and if the problem persists, set the Runtime "
+                        f"library path:\n{matlab_runtime.get_link_to_runtime_docs()}"
+                    )
 
             return func(*args, **kwargs)
 
