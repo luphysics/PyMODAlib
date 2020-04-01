@@ -189,6 +189,12 @@ In `pymodalib.__init__.py`, many functions are imported from the `algorithms` pa
 
 The `implementations` package contains a `matlab` package and a `python` package. The `matlab` package contains wrappers for algorithms supplied by MATLAB-packaged libraries, while the `python` package contains algorithms implemented purely in Python.
 
+### Docstring style
+
+PyMODAlib uses [Numpy-style docstrings](https://numpydoc.readthedocs.io/en/latest/format.html). 
+
+To configure PyCharm to use this style, go to `Settings` -> `Tools` -> `Python Integrated Tools` and change `Docstring format` from `reStructuredText` to `NumPy`.
+
 ### "Gotchas"
 
 When importing a function/package from another part of `pymodalib`, your IDE may auto-import the package without the `pymodalib` prefix. For example, `pymodalib.algorithms.wavelet` may be imported as `algorithms.wavelet`. This can cause some confusing errors.
