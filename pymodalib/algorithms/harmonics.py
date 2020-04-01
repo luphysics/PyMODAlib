@@ -48,17 +48,19 @@ def harmonicfinder(
     fs : float
         The sampling frequency of the signal.
     scale_min : float
-        # TODO docs
+        The minimum wavelet timescale.
     scale_max : float
-        # TODO docs
+        The maximum wavelet timescale.
     sigma : float
-        # TODO docs
+        (Default value = 1.05) Used to define the timescale increment. For example, `sigma = 1.05` is a timescale
+        increment of 5 percent.
     time_resolution : float, optional
-        (Default value = 0.01) The time resolution.
+        (Default value = 0.1) The time resolution.
     surrogates : int
         (Default value = 10) The number of surrogates.
     parallel : bool
-        (Default value = True) Whether to parallelize the algorithm, which provides a significant speed boost in many cases.
+        (Default value = True) Whether to parallelize the algorithm, which provides a significant
+        speed boost in many cases.
     crop : bool, optional
         (Default value = True) Whether to crop the results, removing the NaN values around the left and bottom edges.
 
