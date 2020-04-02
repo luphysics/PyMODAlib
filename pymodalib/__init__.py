@@ -20,9 +20,10 @@ from pymodalib.algorithms.harmonics import harmonicfinder
 from pymodalib.algorithms.signals import preprocess
 from pymodalib.algorithms.signals import resampl_flow as downsample
 from pymodalib.algorithms.wavelet import wavelet_transform
+from pymodalib.algorithms.windowed_fourier import windowed_fourier_transform
 from pymodalib.utils.cache import cachedarray, cleanup
 
-# This isn't important; it just ensures that PyCharm doesn't try to remove unnecessary imports.
+# This tuple isn't important; it just ensures that PyCharm doesn't try to remove unnecessary imports.
 __imported = (
     cachedarray,
     cleanup,
@@ -31,5 +32,10 @@ __imported = (
     downsample,
     preprocess,
     wavelet_transform,
+    windowed_fourier_transform,
     harmonicfinder,
 )
+
+# Useful aliases for functions.
+wt = wavelet_transform
+wft = windowed_fourier_transform

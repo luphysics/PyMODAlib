@@ -18,25 +18,21 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-from pymodalib import preprocess
-
-# Set current working directory to the location of this script.
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-signal = np.load("../1signal_10Hz.npy")
+load = np.load("output.npz")
 
-# Sampling frequency.
-fs = 10
+wft = load.get("wft")
+freq = load.get("freq")
+times = load.get("times")
+impl = load.get("implementation")
 
-# Times associated with signal.
-times = np.arange(0, signal.size / fs, 1 / fs)
+fig, ax = plt.subplots()
+mesh1, mesh2 = np.meshgrid(times, freq)
+ax.contourf(mesh1, mesh2, np.abs(wft))
 
-preproc_signal = preprocess(signal, fs)
-
-ax1 = plt.subplot(2, 1, 1)
-ax1.plot(times, signal[0, :])
-
-ax2 = plt.subplot(2, 1, 2, sharex=ax1, sharey=ax1)
-ax2.plot(times, preproc_signal)
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Frequency (Hz)")
+ax.set_title(f"Amplitude of windowed Fourier transform ({impl} implementation)")
 
 plt.show()

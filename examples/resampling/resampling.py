@@ -23,7 +23,7 @@ import pymodalib
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-signal = np.load("1signal_10Hz.npy").transpose()
+signal = np.load("../1signal_10Hz.npy").transpose()
 fs = 10
 
 

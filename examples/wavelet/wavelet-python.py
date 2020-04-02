@@ -27,7 +27,7 @@ import pymodalib
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
 if __name__ == "__main__":
-    signal = np.load("1signal_10Hz.npy")
+    signal = np.load("../1signal_10Hz.npy")
 
     fs = 10
     times = np.arange(0, signal.size / fs, 1 / fs)

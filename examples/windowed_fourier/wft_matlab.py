@@ -13,30 +13,39 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+"""
+Example of using the MATLAB implementation of the wavelet transform.
+"""
+
 import os
+import platform
 
+import numpy
 import numpy as np
-from matplotlib import pyplot as plt
+import pymodalib
 
-from pymodalib import preprocess
-
-# Set current working directory to the location of this script.
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-signal = np.load("../1signal_10Hz.npy")
+if __name__ == "__main__":
+    signal = np.load("../1signal_10Hz.npy")
 
-# Sampling frequency.
-fs = 10
+    fs = 10
+    times = np.arange(0, signal.size / fs, 1 / fs)
 
-# Times associated with signal.
-times = np.arange(0, signal.size / fs, 1 / fs)
+    wft, freq = pymodalib.windowed_fourier_transform(
+        signal, fs, fmin=0.1, cut_edges=True
+    )
 
-preproc_signal = preprocess(signal, fs)
+    # Save results to a data file.
+    numpy.savez("output", wft=wft, freq=freq, times=times, implementation="MATLAB")
 
-ax1 = plt.subplot(2, 1, 1)
-ax1.plot(times, signal[0, :])
+    if platform.system() != "Linux":
+        # Plot the result by importing the plotting script.
+        import plot_wft
 
-ax2 = plt.subplot(2, 1, 2, sharex=ax1, sharey=ax1)
-ax2.plot(times, preproc_signal)
-
-plt.show()
+        # Prevents Pycharm from cleaning up the import statement.
+        dummy_variable = plot_wft
+    else:
+        print(
+            "\nResults saved to a data file. Please run the 'plot_wft.py' script to plot the results."
+        )

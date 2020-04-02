@@ -37,7 +37,6 @@ def wavelet_transform(
     rel_tolerance: float = 0.01,
     implementation="matlab",
     padding: str = "predictive",
-    fstep: str = "auto",
     return_opt: bool = False,
     *args,
     **kwargs,
@@ -52,46 +51,80 @@ def wavelet_transform(
     Parameters
     ----------
     signal : ndarray
-        [1D array] The signal to perform the wavelet transform on.
+       [1D array] The signal to perform the wavelet transform on.
     fs : float
-        The sampling frequency of the signal.
-    fmin: float
-         (Default value = None) The minimum frequency for the transform.
-    fmax: float
-         (Default value = None) The maximum frequency for the transform.
-    resolution: float
-         (Default value = 1) The frequency resolution for the transform.
-    cut_edges: bool
-         (Default value = False) Whether to cut the edges of the transform, making the cone of influence 
-         visible in the result.
-    wavelet : {"Lognorm", "Morlet", "Bump"}, optional
-         (Default value = "Lognorm") The type of wavelet transform.
-    preprocess: bool
-         (Default value = True) Whether to perform pre-processing on the signal before calculating the wavelet transform.
-    rel_tolerance: float
-         (Default value = 0.01) # TODO docs
+       The sampling frequency of the signal.
+    fmin : float
+        The minimal frequency for which to calculate the WT. If left to the default value, the function will use the
+        minimal frequency for which at least one WT coefficient is determined up to a specified relative
+        accuracy (`rel_tolerance`) with respect to boundary errors.
+    fmax : float
+       (Default = `fs/2`) The maximal frequency for which to calculate the WT.
+    resolution : float
+       (Default = 1) The wavelet resolution parameter, which determines the trade-off between the time
+       and frequency resolutions; the higher it is, the closer in frequency components can be resolved in WT,
+       but the closer the slower time-variations, e.g. amplitude/frequency modulation, can be reliably represented.
+       For the way it is introduced for each wavelet, see Appendix E in [1], while if the wavelet is user-defined in
+       terms of its function in frequency and/or time (see `wavelet` parameter), then `resolution` has no effect.
+    cut_edges : bool
+        (Default = False) Whether WT coefficients should be set to NaN out of the influence (see [1]).
+        Use `cut_edges=True` if you wish to analyze the WT only within the cone of influence, which is recommended
+        if you are estimating only the time-averaged quantities.
+    wavelet : {"Lognorm", "Morlet", "Bump", "Morse-a"}
+        (Default = "Lognorm") Wavelet used in the WT calculation.
+        For a list of all supported names and their properties, see Appendix E in [1].
+        *Note: supplying a wavelet using a custom function is not supported in PyMODAlib.*
+    preprocess : bool
+        (Default = True) Whether to perform signal preprocessing, which consists of subtracting third-order
+        polynomial fit and then bandpassing the signal in the band of interest (`fmin`-`fmax`).
+    padding : {"predictive", 0, "symmetric", "none", "periodic"}, float
+        (Default = "predictive") Padding to use when calculating the transform. For all paddings and their effects,
+        see [1].
+        Most useful are the zero-padding, for which boundary errors are well-determined, and "predictive" padding,
+        for which they are most reduced, while other choices have limited usefulness.
+        *Note: if a List containing two padding parameters from the accepted values is passed, the first value
+        will be used for left-padding and the second value for right-padding.*
+    rel_tolerance : float
+        (Default = 0.01) Commonly referred to as `epsilon` in [1], this parameter is the relative tolerance as a
+        percentage, which specifies the cone of influence for the WT (i.e. the range of WT coefficients which
+        are determined up to this accuracy in respect of boundary errors). Also determintes the minimal number of values
+        to pad the signal with,so that the relative constribution of effects of implicit periodic signal continutation
+        due to convolution in the frequency domain is smaller. See [1] for details.
     implementation : {"matlab", "python"}, optional
-         (Default value = "matlab") Whether to use the MATLAB implementation, or the Python implementation.
-         The MATLAB implementation requires the MATLAB Runtime.
-         **When the Python implementation is considered fully stable, the default value of this
-         parameter will be changed.**
-    padding: str
-         (Default value = "predictive") The type of padding to use when calculating the transform.
-    fstep: str
-         (Default value = "auto") # TODO docs
+        (Default value = "matlab") Whether to use the MATLAB implementation, or the Python implementation.
+        The MATLAB implementation requires the MATLAB Runtime.
+        *Note: When the Python implementation is considered fully stable, the default value of this
+        parameter will be changed.*
     return_opt: bool
-         (Default value = False) Whether to return a dictionary containing the options used with the wavelet transform.
+         (Default value = False) Whether to return a dictionary containing the parameters used with the wavelet
+         transform. This can be useful if `fmin` was left to its default value, since it will contain the value
+         of `fmin` which was used.
     *args : Any, optional
-        Any other arguments to pass to the wavelet transform.
+        Any other arguments to pass to the wavelet transform implementation.
     **kwargs : Any, optional
-        Any other keyword arguments to pass to the wavelet transform.
+        Any other keyword arguments to pass to the wavelet transform implementation.
 
     Returns
     -------
     wt : ndarray
-        [2D array, complex] The wavelet transform.
+        [2D array, complex] The wavelet transform, whose rows correspond to frequencies and columns
+        to time. Take the absolute value to get the amplitude.
+        **Dimensions: (FNxL) where FN is the number of frequencies and L is the length of the signal in samples.**
     freq : ndarray
-        [1D array] The frequencies.
+        [1D array] The frequencies corresponding to the rows of `wt`.
+
+    Notes
+    -----
+    Author: Dmytro Iatsenko.
+
+    .. [1] D. Iatsenko, A. Stefanovska and P.V.E. McClintock,
+       "Linear and synchrosqueezed time-frequency representations revisited.
+       Part I: Overview, standards of use, related issues and algorithms."
+       {preprint:arXiv:1310.7215}
+    .. [2] D. Iatsenko, A. Stefanovska and P.V.E. McClintock,
+       "Linear and synchrosqueezed time-frequency representations revisited.
+       Part II: Resolution, reconstruction and concentration."
+       {preprint:arXiv:1310.7274}
     """
     verify_parameter(wavelet, possible_values=["Lognorm", "Bump", "Morlet"])
     verify_parameter(implementation, possible_values=["matlab", "python"])
