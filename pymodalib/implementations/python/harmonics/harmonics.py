@@ -44,7 +44,8 @@ def harmonicfinder_impl_python(
     """
     if int(fs * time_res) != fs * time_res:
         warnings.warn(
-            f"fs * time_res must be an integer, but it is {fs * time_res}. The value will be rounded to {round(fs * time_res)}. You may wish to try a different time resolution.",
+            f"fs * time_res must be an integer, but it is {fs * time_res}. "
+            f"You may wish to try a different time resolution.",
             RuntimeWarning,
         )
 
@@ -123,13 +124,41 @@ def harmonicfinder_impl_python(
 
     pos2 = pos
 
-    if crop:
-        mask1 = ~np.all(np.isnan(res), axis=0)
-
+    if crop and not np.all(np.isnan(res), axis=(0, 1,)):
+        # Crop out rows which are completely NaN.
+        mask1 = ~np.all(np.isnan(res), axis=0)  # Columns which only contain NaN values.
         res = res[mask1][:, mask1]
         scalefreq = scalefreq[mask1]
         pos1 = pos1[mask1][:, mask1]
         pos2 = pos2[mask1][:, mask1]
+
+        # Crop out rows and columns which contain any NaN values at the top right of the signal.
+        mask2 = np.any(np.isnan(res), axis=0)  # Columns which contain a NaN value.
+        try:
+            index = mask2.nonzero()[0][-1] + 1
+            res = res[index:, index:]
+            scalefreq = scalefreq[index:]
+            pos1 = pos1[index:, index:]
+            pos2 = pos2[index:, index:]
+
+            warnings.warn(
+                f"Cropping invalid values from the results. "
+                f"The frequency range may be much smaller than expected.",
+                RuntimeWarning,
+            )
+        except IndexError:
+            pass
+
+    # Cut off the section where scalefreq < scale_min.
+    try:
+        index = (scalefreq < 1 / scale_max / fs).nonzero()[0][0]
+        res = res[:index, :index]
+        scalefreq = scalefreq[len(scalefreq) - index :]
+        pos1 = pos1[:index, :index]
+        pos2 = pos2[:index, :index]
+
+    except IndexError:
+        pass
 
     return (
         scalefreq,
@@ -248,105 +277,163 @@ def modbasicwavelet_flow_cmplx4(
     m = np.arange(0, m_max + 2)
 
     REZ = np.empty(
-        (len(m), np.int(np.floor(t_end - t_start) / time_res + 1)), dtype=np.complex64
+        (len(m), int(np.floor(t_end - t_start) / time_res + 1)), dtype=np.complex64
     )
     REZ.fill(np.NaN)
 
-    flo = np.int(np.floor((t_end - t_start)))
+    flo = int(np.floor((t_end - t_start)))
     stevec = -1
 
-    for z in range(len(m)):
-        s = scale_min * sigma ** m[z]
+    first_not_nan = False
 
-        # Begin calculating wavelet.
-        f0 = 1
+    while np.all(np.isnan(REZ), axis=(0, 1,)):
+        for z in range(len(m)):
+            s = scale_min * sigma ** m[z]
 
-        tval_k = 0
-        tval_k2 = 0
+            # Begin calculating wavelet.
+            f0 = 1
 
-        _ttt = np.arange(0, 5000 + 0.5 / fs, 1 / fs)
-        _zzz = s ** (-0.5) * np.exp(-(_ttt ** 2) / (2 * s ** 2))
+            tval_k = 0
+            tval_k2 = 0
 
-        for index in range(len(_zzz)):
-            zzz = _zzz[index]
-            ttt = _ttt[index]
+            _ttt = np.arange(0, 5000 + 0.5 / fs, 1 / fs)
+            _zzz = s ** (-0.5) * np.exp(-(_ttt ** 2) / (2 * s ** 2))
 
-            if zzz < 0.1 * (s ** (-0.5)) and tval_k2 == 0:
-                tval_k2 = ttt
+            for index in range(len(_zzz)):
+                zzz = _zzz[index]
+                ttt = _ttt[index]
 
-            if zzz < 0.001 * (s ** (-0.5)):
-                tval_k = ttt
+                if zzz < 0.1 * (s ** (-0.5)) and tval_k2 == 0:
+                    tval_k2 = ttt
+
+                if zzz < 0.001 * (s ** (-0.5)):
+                    tval_k = ttt
+                    break
+
+            st_kor = tval_k * fs
+            margin = tval_k2 * fs
+
+            # Round up st_kor for accuracy.
+            if np.mod(st_kor, fs) != 0:
+                st_kor = int(fs * np.ceil(st_kor / fs))
+
+            # Round up margin for safety.
+            if np.mod(margin, fs) != 0:
+                margin = int(fs * np.ceil(margin / fs))
+
+            if margin > 0.5 * fs * flo:
                 break
 
-        st_kor = np.int(round(tval_k * fs))
-        margin = tval_k2 * fs
+            correction = st_kor == 0
+            if correction:
+                warnings.warn(f"st_kor={st_kor}. Skipping iteration.", RuntimeWarning)
+                continue
 
-        # Round up st_kor for accuracy.
-        if np.mod(st_kor, fs) != 0:
-            st_kor = np.int(fs * np.ceil(st_kor / fs))
+            u = np.arange(-st_kor / fs, st_kor / fs, 1 / fs)
 
-        # Round up margin for safety.
-        if np.mod(margin, fs) != 0:
-            margin = np.int(fs * np.ceil(margin / fs))
-
-        if margin > 0.5 * fs * flo:
-            break
-
-        u = np.arange(-st_kor / fs, st_kor / fs, 1 / fs)
-
-        wavelet = (
-            s ** (-0.5)
-            * np.exp(-2j * np.pi * f0 * u / s)
-            * np.exp(-(u ** 2) / (2 * s ** 2))
-        )
-
-        x = np.fft.fft(np.concatenate((wavelet, np.zeros((len(signal) - 1,)))), axis=0)
-        y = np.fft.fft(np.concatenate((signal, np.zeros((len(wavelet) - 1,)))), axis=0)
-
-        con = np.fft.ifft(x * y, axis=0)
-
-        step = int(round(fs * time_res))
-        if step != fs * time_res:
-            step = int(round(step))
-
-            warnings.warn(
-                f"fs * time_res = {fs * time_res}, but this should be an integer. Rounding to {step}.",
-                RuntimeWarning,
+            wavelet = (
+                s ** (-0.5)
+                * np.exp(-2j * np.pi * f0 * u / s)
+                * np.exp(-(u ** 2) / (2 * s ** 2))
             )
 
+            x = np.fft.fft(
+                np.concatenate((wavelet, np.zeros((len(signal) - 1,)))), axis=0
+            )
+            y = np.fft.fft(
+                np.concatenate((signal, np.zeros((len(wavelet) - 1,)))), axis=0
+            )
+
+            con = np.fft.ifft(x * y, axis=0)
+
+            step = fs * time_res
+            if int(step) != step:
+                warnings.warn(
+                    f"fs * time_res = {fs * time_res}, but this should be an integer.",
+                    RuntimeWarning,
+                )
             if step <= 0:
                 raise Exception(
                     f"'step' must be a positive integer. Cannot proceed when step = {step}."
                 )
 
-        margin = np.int(margin)
+            flo_fs = flo * fs
+            if int(flo_fs) != flo_fs:
+                warnings.warn(
+                    f"flo * fs is {flo * fs}, but it should be an integer. Try different parameters if possible.",
+                    RuntimeWarning,
+                )
 
-        flo_fs = flo * fs
-        if int(flo_fs) != flo_fs:
-            flo_fs = int(round(flo_fs))
-            warnings.warn(
-                f"flo * fs must be an integer, but is {flo * fs}. Rounding to {flo_fs}.",
-                RuntimeWarning,
-            )
-        else:
-            flo_fs = int(flo_fs)
+            if correction:
+                st_kor = 0
 
-        rez = con[np.arange(st_kor + margin, (st_kor - margin + flo_fs + 1), step)]
+            rez = con[
+                np.arange(
+                    int(np.floor(st_kor + margin)),
+                    int(np.ceil(st_kor - margin + flo_fs + 1)),
+                    int(np.ceil(step)),
+                )
+            ]
 
-        stevec += 1
-        if margin / (fs * time_res) > 0:
-            cols = np.int(margin / (fs * time_res))
-            nan = np.empty((cols,))
-            nan.fill(np.NaN)
-            trans = np.concatenate((nan, rez, nan,))
-        else:
-            trans = rez.copy()
+            stevec += 1
+            if margin / step > 0:
+                cols = int(np.floor(margin / (fs * time_res)))
+                nan = np.empty((cols,))
+                nan.fill(np.NaN)
+                trans = np.concatenate((nan, rez, nan,))
+            else:
+                trans = rez.copy()
 
-        lentrans = len(trans)
-        lenrez = len(REZ[stevec, :])
+            if stevec > len(REZ) - 1:
+                warnings.warn(
+                    f"stevec={stevec}, which is larger than {len(REZ) - 1}. "
+                    f"Try different parameters if possible.",
+                    RuntimeWarning,
+                )
+                stevec = len(REZ) - 1
 
-        if lentrans == lenrez:
-            REZ[stevec, :] = trans
+            lentrans = len(trans)
+            lenrez = len(REZ[stevec, :])
+
+            if lentrans == lenrez:
+                REZ[stevec, :] = trans
+                first_not_nan = True
+            elif first_not_nan:
+                diff = lentrans - lenrez
+                msg = (
+                    f"lentrans={lentrans}, lenrez={lenrez}; they should be equal. "
+                    f"Try different parameters if possible."
+                )
+
+                if diff < 0:
+                    warnings.warn(msg, RuntimeWarning)
+                    nan = np.empty((abs(diff),))
+                    nan.fill(np.NaN)
+                    REZ[stevec, :] = np.concatenate((trans, nan))
+                elif diff > 0:
+                    warnings.warn(msg, RuntimeWarning)
+                    REZ[stevec, :] = trans[:lenrez]
+            else:
+                warnings.warn(
+                    f"Cannot write any data to the REZ array with lentrans={lentrans}, lenrez={lenrez}.",
+                    RuntimeWarning,
+                )
+
+        if first_not_nan:
+            break
+
+        warnings.warn(
+            f"Failed to set values for REZ on first iteration. "
+            f"Try different parameters if possible.",
+            RuntimeWarning,
+        )
+        first_not_nan = True
+
+    if np.all(np.isnan(REZ), axis=(0, 1,)):
+        warnings.warn(
+            f"Result contains only NaN values. Please try with different parameters.",
+            RuntimeWarning,
+        )
 
     return REZ
 
