@@ -20,6 +20,12 @@ from matplotlib import pyplot as plt
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
+print("Plotting...")
+
+assert "output.npz" in os.listdir("."), (
+    "Please run 'wavelet-python.py' or 'wavelet-matlab.py' to generate "
+    "the data required for this script to run."
+)
 load = np.load("output.npz")
 
 wt = load.get("wt")
@@ -27,13 +33,25 @@ freq = load.get("freq")
 times = load.get("times")
 impl = load.get("implementation")
 
-fig, ax = plt.subplots()
+wt_power = np.abs(wt) ** 2
+avg_wt_power = np.nanmean(wt_power, axis=1)
 mesh1, mesh2 = np.meshgrid(times, freq)
-ax.contourf(mesh1, mesh2, np.abs(wt))
 
-ax.set_yscale("log")
-ax.set_xlabel("Time (s)")
-ax.set_ylabel("Frequency (Hz)")
-ax.set_title(f"Amplitude of wavelet transform ({impl} implementation)")
+fig, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={"width_ratios": [3, 1,]}, sharey=True)
 
+ax1.contourf(mesh1, mesh2, wt_power)
+ax1.set_title(f"WT power ({impl} implementation)")
+ax1.set_xlabel("Time (s)")
+
+ax2.plot(avg_wt_power, freq)
+ax2.set_title("Time-averaged WT power")
+
+for ax in (ax1, ax2):
+    ax.set_yscale("log")
+    ax.set_ylabel("Frequency (Hz)")
+
+ax1.set_ylim(np.min(freq), np.max(freq))
+
+fig.set_size_inches(10, 5.5)
+plt.tight_layout()
 plt.show()
