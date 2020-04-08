@@ -151,12 +151,12 @@ def harmonicfinder_impl_python(
 
     # Cut off the section where scalefreq < scale_min.
     try:
-        index = (scalefreq < 1 / scale_max / fs).nonzero()[0][0]
-        res = res[:index, :index]
-        scalefreq = scalefreq[len(scalefreq) - index :]
-        pos1 = pos1[:index, :index]
-        pos2 = pos2[:index, :index]
-
+        if crop:
+            index = (scalefreq < 1 / scale_max / fs).nonzero()[0][0]
+            res = res[:index, :index]
+            scalefreq = scalefreq[len(scalefreq) - index :]
+            pos1 = pos1[:index, :index]
+            pos2 = pos2[:index, :index]
     except IndexError:
         pass
 
@@ -273,7 +273,7 @@ def modbasicwavelet_flow_cmplx4(
     t_start = 0
     t_end = len(signal) / fs
 
-    m_max = np.int(np.floor(np.log(scale_max / scale_min) / np.log(sigma)))
+    m_max = int(np.floor(np.log(scale_max / scale_min) / np.log(sigma)))
     m = np.arange(0, m_max + 2)
 
     REZ = np.empty(
@@ -303,12 +303,20 @@ def modbasicwavelet_flow_cmplx4(
                 zzz = _zzz[index]
                 ttt = _ttt[index]
 
-                if zzz < 0.1 * (s ** (-0.5)) and tval_k2 == 0:
+                if tval_k2 == 0 and zzz < 0.1 * (s ** (-0.5)):
                     tval_k2 = ttt
 
                 if zzz < 0.001 * (s ** (-0.5)):
                     tval_k = ttt
                     break
+            else:  # This triggers if the "break" above was never executed.
+                index = np.argmin(_zzz)
+                tval_k = _ttt[index]
+                warnings.warn(
+                    f"Could not calculate 'tval_k' within desired tolerance. "
+                    f"Using best value: tval_k={tval_k}.",
+                    RuntimeWarning,
+                )
 
             st_kor = tval_k * fs
             margin = tval_k2 * fs
@@ -326,7 +334,9 @@ def modbasicwavelet_flow_cmplx4(
 
             correction = st_kor == 0
             if correction:
-                warnings.warn(f"st_kor={st_kor}. Skipping iteration.", RuntimeWarning)
+                warnings.warn(
+                    f"st_kor={st_kor}. Skipping iteration {z}.", RuntimeWarning
+                )
                 continue
 
             u = np.arange(-st_kor / fs, st_kor / fs, 1 / fs)
