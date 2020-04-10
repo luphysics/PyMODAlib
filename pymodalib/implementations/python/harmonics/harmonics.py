@@ -149,17 +149,6 @@ def harmonicfinder_impl_python(
         except IndexError:
             pass
 
-    # Cut off the section where scalefreq < scale_min.
-    try:
-        if crop:
-            index = (scalefreq < 1 / scale_max / fs).nonzero()[0][0]
-            res = res[:index, :index]
-            scalefreq = scalefreq[len(scalefreq) - index :]
-            pos1 = pos1[:index, :index]
-            pos2 = pos2[:index, :index]
-    except IndexError:
-        pass
-
     return (
         scalefreq,
         res.conj().T,
