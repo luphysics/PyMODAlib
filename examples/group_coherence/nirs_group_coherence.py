@@ -15,20 +15,16 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-This is for testing the group coherence algorithm with known data.
-
-It may be useful to read the code, but the data are not supplied as part of PyMODAlib.
+Example of using the group coherence algorithm with NIRS data.
 """
 
 import os
-import sys
 
 import numpy as np
+import pymodalib
 import scipy.io
 from matplotlib import pyplot as plt
 from numpy import ndarray
-
-from pymodalib.algorithms.group_coherence import dual_group_coherence
 
 # Sampling frequency.
 fs = 31.25
@@ -58,20 +54,14 @@ if __name__ == "__main__":
     # Create array of time values.
     times = np.arange(0, sig_length / fs, 1 / fs)
 
-    try:
-        # Load the data files.
-        group1_signals_a = load_mat("Cphd_O2satNIRS11.mat")
-        group1_signals_b = load_mat("Cphd_Respiration_resampl.mat")
-        group2_signals_a = load_mat("phd_O2satNIRS11.mat")
-        group2_signals_b = load_mat("phd_Respiration_resampl.mat")
-    except:
-        print(
-            "Unfortunately, you don't seem to have the data files required to run this analysis."
-        )
-        sys.exit(-1)
+    # Load the data files.
+    group1_signals_a = load_mat("Cphd_O2satNIRS11.mat")
+    group1_signals_b = load_mat("Cphd_Respiration_resampl.mat")
+    group2_signals_a = load_mat("phd_O2satNIRS11.mat")
+    group2_signals_b = load_mat("phd_Respiration_resampl.mat")
 
     # Calculate the group coherence.
-    freq, coh1, coh2, surr1, surr2 = dual_group_coherence(
+    freq, coh1, coh2, surr1, surr2 = pymodalib.dual_group_coherence(
         group1_signals_a, group1_signals_b, group2_signals_a, group2_signals_b, fs
     )
 

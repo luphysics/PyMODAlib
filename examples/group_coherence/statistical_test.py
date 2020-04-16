@@ -16,24 +16,35 @@
 """
 This script uses the result of "nirs_group_coherence.py" to perform a statistical test
 for the significance of the results.
+
+The results for different frequency intervals are printed.
 """
 
 import os
+import sys
+import warnings
 
 import numpy as np
-from matplotlib import pyplot as plt
-
 from pymodalib.algorithms import group_coherence
 
 if __name__ == "__main__":
     # Change working directory to where this file is saved.
     os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-    data = np.load("output.npz")
-    freq = data.get("freq")
-    coh1 = data.get("coh1")
-    coh2 = data.get("coh2")
+    try:
+        # Load the data created by "nirs_group_coherence.py".
+        data = np.load("output.npz")
+        freq = data.get("freq")
+        coh1 = data.get("coh1")
+        coh2 = data.get("coh2")
+    except FileNotFoundError:
+        warnings.warn(
+            "Data files are not present. Please run 'nirs_group_coherence.py' before this script.",
+            RuntimeWarning,
+        )
+        sys.exit(-1)
 
+    # Frequency intervals.
     intervals = {
         "Endothelial": (0.005, 0.021),
         "Neurogenic": (0.021, 0.052),
@@ -44,12 +55,6 @@ if __name__ == "__main__":
 
     pvalues = group_coherence.statistical_test(freq, coh1, coh2, intervals.values())
 
+    # Print the result for each frequency interval.
     for index, name in enumerate(intervals):
         print(f"{name}: {pvalues[index]}")
-
-    significance = 5 / 100
-    text = [
-        [name, intervals[name], pvalues[index]] for index, name in enumerate(intervals)
-    ]
-
-    plt.table(text)
