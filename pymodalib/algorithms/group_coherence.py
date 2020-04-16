@@ -46,8 +46,9 @@ def group_coherence(
 
     This algorithm uses inter-subject surrogates to calculate the residual coherence.
 
-    Note: you can also pass *args and **kwargs to this function, which will be used when
-    performing the wavelet transform. For example, `wavelet=”Morlet”`.
+    .. note::
+        You can also pass *args and **kwargs to this function, which will be used when
+        performing the wavelet transform. For example, `wavelet=”Morlet”`.
 
     Parameters
     ----------
@@ -107,8 +108,9 @@ def dual_group_coherence(
 
     This algorithm calculates inter-subject surrogates and uses them to calculate the residual coherence.
 
-    Note: you can also pass *args and **kwargs to this function, which will be used when
-    performing the wavelet transform. For example, `wavelet="Morlet"`.
+    .. note::
+        you can also pass *args and **kwargs to this function, which will be used when
+        performing the wavelet transform. For example, `wavelet="Morlet"`.
 
     Parameters
     ----------
@@ -125,8 +127,8 @@ def dual_group_coherence(
     percentile : float, optional
         (Default value = 95) The percentile of the surrogates which will be subtracted from the coherence.
     max_surrogates : int, optional
-        (Default value = None) The maximum number of surrogates to use. You should usually leave this unchanged, but you may wish to use it
-        to reduce the time taken to perform the calculation.
+        (Default value = None) The maximum number of surrogates to use. You should usually leave this unchanged,
+        but you may wish to use it to reduce the time taken to perform the calculation.
     wavelet_args : Any, optional
         Arguments to pass to the wavelet transform function.
     wavelet_kwargs : Any, optional
