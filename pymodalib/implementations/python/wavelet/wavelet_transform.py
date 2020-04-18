@@ -223,7 +223,7 @@ def wavelet_transform(
     fmin: float = None,
     fmax: float = None,
     fstep: str = "auto",  # TODO: investigate what this should do.
-    padding: str = "predictive",
+    padding: Union[int, str] = "predictive",
     rel_tolerance: float = 0.01,
     preprocess: bool = False,
     disp_mode: bool = False,
@@ -329,6 +329,9 @@ def wavelet_transform(
             w,
         )
         dflag = 1
+    elif is_number(padding):
+        padleft = np.ones((n1,)) * float(padding)
+        padright = np.ones((n2,)) * float(padding)
     else:
         padleft = []
         padright = []

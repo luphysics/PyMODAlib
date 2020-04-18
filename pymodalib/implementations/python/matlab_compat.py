@@ -48,6 +48,14 @@ def isempty(value):
     return len(value) == 0
 
 
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
 def is_arraylike(value):
     return hasattr(value, "__len__")
 
