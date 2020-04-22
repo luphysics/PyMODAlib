@@ -74,6 +74,14 @@ def harmonicfinder(
         [2D array] The number of surrogates which the raw harmonics are higher than at each point.
     pos2 : ndarray
         [2D array] The raw harmonics relative to the mean and standard deviation of the surrogate distribution.
+
+    Notes
+    -----
+    Author: Lawrence Sheppard.
+
+    .. [1] L.W. Sheppard, A. Stefanovska and P.V.E. McClintock,
+        "Detecting the harmonics of oscillations with time-variable frequencies".
+        {doi:10.1103/PhysRevE.83.016206}
     """
     return impl(
         signal,
