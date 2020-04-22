@@ -17,6 +17,7 @@
 Python implementation of the wavelet transform function.
 """
 import warnings
+from typing import Union
 
 import scipy.integrate
 import scipy.optimize
@@ -131,12 +132,14 @@ class MorseWavelet(WindowParams):
 
         ind = np.where(xi > 0)
         rv = np.copy(xi)
-        rv[np.where(xi <= 0)] = -np.inf
+        rv[np.where(xi <= 0)] = 0  # -np.inf
         rv[ind] = np.log(xi[ind])
-        return np.exp(
-            -np.power(xi, self.__a)
-            + self.q * (rv + (1 / self.__a) * np.log(exp(1) * self.__a / self.q))
+        retval = np.zeros(xi.shape, dtype=np.complex)
+        retval[ind] = np.exp(
+            -np.power(xi[ind], self.__a)
+            + self.q * (rv[ind] + (1 / self.__a) * np.log(exp(1) * self.__a / self.q))
         )
+        return retval
 
 
 class MorletWavelet(WindowParams):
@@ -220,7 +223,7 @@ def wavelet_transform(
     fmin: float = None,
     fmax: float = None,
     fstep: str = "auto",  # TODO: investigate what this should do.
-    padding: str = "predictive",
+    padding: Union[int, str] = "predictive",
     rel_tolerance: float = 0.01,
     preprocess: bool = False,
     disp_mode: bool = False,
@@ -326,6 +329,9 @@ def wavelet_transform(
             w,
         )
         dflag = 1
+    elif is_number(padding):
+        padleft = np.ones((n1,)) * float(padding)
+        padright = np.ones((n2,)) * float(padding)
     else:
         padleft = []
         padright = []
