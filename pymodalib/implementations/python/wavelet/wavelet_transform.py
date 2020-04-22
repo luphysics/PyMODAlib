@@ -347,8 +347,11 @@ def wavelet_transform(
 
     fx = np.fft.fft(signal, np.int(NL), axis=0)
     if preprocess:
-        indices = ((ff <= max([fmin, fs / L])) & (ff >= fmax)).nonzero()[1]
-        fx[indices] = 0
+        try:
+            indices = ((ff <= np.max([fmin, fs / L])) | (ff >= fmax)).nonzero()[1]
+            fx[indices] = 0
+        except IndexError:
+            pass
 
     WT = np.zeros((SN, L), dtype=np.complex64) * np.NaN
     ouflag = 0
