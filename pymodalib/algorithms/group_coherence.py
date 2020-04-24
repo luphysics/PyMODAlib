@@ -25,8 +25,8 @@ from numpy import ndarray
 from scipy.stats import ranksums
 
 from pymodalib.implementations.python.coherence.group_coherence import (
-    dual_group_coherence as dual_group_impl,
-    group_coherence as group_impl,
+    dual_group_coherence_impl as dual_group_impl,
+    group_coherence_impl as group_impl,
 )
 
 

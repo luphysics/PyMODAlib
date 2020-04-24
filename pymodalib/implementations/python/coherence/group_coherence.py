@@ -13,10 +13,11 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+import functools
 import multiprocessing
 import random
 import warnings
-from typing import Tuple
+from typing import Tuple, Callable, Any
 
 import numpy as np
 from numpy import ndarray
@@ -31,12 +32,21 @@ class CoherenceException(Exception):
     pass
 
 
-def wt(signal: ndarray, fs: float, *args, **kwargs):
+def wt(signal: ndarray, fs: float, *args, **kwargs) -> Tuple[ndarray, ndarray]:
+    """
+    Wrapper for the wavelet transform.
+    """
     wt, freq = wavelet_transform(signal, fs, *args, **kwargs, Display="off")
     return wt, freq
 
 
-def _chunk_wt(signals_a: ndarray, signals_b: ndarray, fs: float, *args, **kwargs):
+def _chunk_wt(
+    signals_a: ndarray, signals_b: ndarray, fs: float, *args, **kwargs
+) -> Tuple[ndarray, ndarray]:
+    """
+    Used to perform the wavelet transform for chunks of the data. The caller is
+    responsible for splitting the data into chunks.
+    """
     out_a = None
     out_b = None
 
@@ -57,7 +67,7 @@ def _chunk_wt(signals_a: ndarray, signals_b: ndarray, fs: float, *args, **kwargs
 
 def _group_coherence(
     wavelet_transforms_a: ndarray, wavelet_transforms_b: ndarray, mask: ndarray
-):
+) -> ndarray:
     coh_length = wavelet_transforms_a.shape[1]
     out = np.empty((len(wavelet_transforms_a), len(wavelet_transforms_b), coh_length))
 
@@ -72,7 +82,29 @@ def _group_coherence(
     return out
 
 
-def group_coherence(
+def wrapper_pass_function(func: Callable) -> Any:
+    """
+    Wrapper which allows a Pool's 'starmap' to be called with a function that takes no parameters.
+
+    This is used to pass *args and **kwargs to a function, by creating a partial function with
+    `functools.partial` which is provided with all required arguments including the *args and **kwargs.
+
+    The partial function is then passed an an argument to this function in `starmap`.
+
+    Parameters
+    ----------
+    func : Callable
+        The partial function to run, which takes no parameters.
+
+    Returns
+    -------
+    Any
+        The return values from the partial function.
+    """
+    return func()
+
+
+def group_coherence_impl(
     signals_a: ndarray,
     signals_b: ndarray,
     fs: float,
@@ -107,7 +139,10 @@ def group_coherence(
     # Calculate the first two wavelet transforms, so we know their dimensions.
     args = [(signals_a[0, :], fs), (signals_b[0, :], fs)]
 
-    (wt_a, freq), (wt_b, _) = pool.starmap(wt, args)
+    (wt_a, freq), (wt_b, _) = pool.starmap(
+        wrapper_pass_function,
+        [(functools.partial(wt, *a, *wavelet_args, **wavelet_kwargs),) for a in args],
+    )
     if len(freq.shape) > 1:
         freq = freq.reshape(freq.size)
 
@@ -134,7 +169,13 @@ def group_coherence(
         args.append((signals_a[start:end, :], signals_b[start:end, :], fs))
 
     # Calculate wavelet transforms in parallel.
-    results = pool.starmap(_chunk_wt, args)
+    results = pool.starmap(
+        wrapper_pass_function,
+        [
+            (functools.partial(_chunk_wt, *a, *wavelet_args, **wavelet_kwargs),)
+            for a in args
+        ],
+    )
     print(f"Finished calculating wavelet transforms.")
 
     # Write the results from processes into the arrays containing the wavelet transforms.
@@ -265,7 +306,7 @@ def group_coherence(
     return freq, residual_coherence, surrogates
 
 
-def dual_group_coherence(
+def dual_group_coherence_impl(
     group1_signals1: ndarray,
     group1_signals2: ndarray,
     group2_signals1: ndarray,
@@ -312,7 +353,7 @@ def dual_group_coherence(
             RuntimeWarning,
         )
 
-    result1 = group_coherence(
+    result1 = group_coherence_impl(
         group1_signals1,
         group1_signals2,
         fs,
@@ -322,7 +363,7 @@ def dual_group_coherence(
         *wavelet_args,
         **wavelet_kwargs,
     )
-    result2 = group_coherence(
+    result2 = group_coherence_impl(
         group2_signals1,
         group2_signals2,
         fs,
