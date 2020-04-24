@@ -15,7 +15,6 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 import functools
 import multiprocessing
-import random
 import warnings
 from typing import Tuple, Callable, Any
 
@@ -108,12 +107,11 @@ def group_coherence_impl(
     signals_a: ndarray,
     signals_b: ndarray,
     fs: float,
-    max_surrogates: int = None,
     cleanup: bool = True,
     percentile: float = 95,
     *wavelet_args,
     **wavelet_kwargs,
-) -> Tuple[ndarray, ndarray, ndarray]:
+) -> Tuple[ndarray, ndarray]:
     """
     For docstrings, please see the wrapper functions in 'pymodalib.algorithms'.
     """
@@ -211,35 +209,9 @@ def group_coherence_impl(
     # Create empty array for coherence and surrogates.
     coherence = np.empty((xa, *wavelet_transforms_a.shape[:-1]))
 
-    # Number of possible surrogates. (Dimensions of coherence array minus number of elements along the diagonal).
-    potential_surrogates = xa ** 2 - xa
-
-    if max_surrogates is not None:
-        surrogates = min(potential_surrogates, max_surrogates)
-    else:
-        surrogates = potential_surrogates
-
     # The mask will show which elements are surrogates and can be skipped.
     mask = np.empty(coherence.shape[:-1], dtype=np.bool)
     mask.fill(True)
-
-    def random_pair(start, end):
-        return random.randint(start, end), random.randint(start, end)
-
-    # Randomly choose which surrogates to skip.
-    blanks = 0
-    while surrogates > 0 and blanks < potential_surrogates - surrogates:
-        index = random_pair(0, xa - 1)
-
-        # Ensure index is not a real coherence, and that it hasn't already been chosen.
-        if index[0] != index[1] and mask[index]:
-            mask[index] = False
-            blanks += 1
-
-    if surrogates == 0:
-        mask[:, :] = False
-        diag = np.diag_indices(len(mask))
-        mask[diag] = True
 
     indices = np.arange(0, len(coherence))
     chunks = array_split(indices, processes)
@@ -278,8 +250,12 @@ def group_coherence_impl(
     """
     Now we have a large array containing the coherence between all signals.
     
-    The values on the diagonal are the useful coherences; the other values are
-    surrogates.
+    The values on the diagonal are the useful coherences. For each element 
+    on the diagonal, the surrogates will be the row and column to which the 
+    element belongs. A percentile of these surrogates will be taken, and the 
+    result will be subtracted from the coherence (the diagonal element).
+    
+    These diagonal elements will be returned in the result.
     """
 
     # Indices along the diagonal of the coherence array.
@@ -289,12 +265,26 @@ def group_coherence_impl(
 
     # Set the coherences to NaN, so we're left with the surrogates only.
     coherence[diag] = np.NaN
-    surrogates = coherence
 
-    surr_percentile = np.nanpercentile(surrogates, percentile, axis=(0, 1,))
-    surr_percentile[np.isnan(surr_percentile)] = 0
+    residual_coherence = real_coherences
 
-    residual_coherence = real_coherences - surr_percentile
+    # For each coherence, subtract a percentile of the surrogates.
+    for coh_index in range(len(residual_coherence)):
+        # Create a copy of the array, since we need to write NaNs into it.
+        surrogates = coherence.copy()
+
+        N = len(surrogates)
+        for i in range(N):
+            for j in range(N):
+                # Set every row and column which doesn't contain the desired coherence to NaN.
+                if i != coh_index and j != coh_index:
+                    surrogates[i, j, :] = np.NaN
+
+        surr_percentile = np.nanpercentile(surrogates, percentile, axis=(0, 1,))
+        surr_percentile[np.isnan(surr_percentile)] = 0
+
+        residual_coherence[coh_index] -= surr_percentile
+
     residual_coherence[residual_coherence < 0] = 0
 
     del coherence
@@ -303,7 +293,7 @@ def group_coherence_impl(
     if cleanup:
         pymodalib.cleanup()
 
-    return freq, residual_coherence, surrogates
+    return freq, residual_coherence
 
 
 def dual_group_coherence_impl(
@@ -313,10 +303,9 @@ def dual_group_coherence_impl(
     group2_signals2: ndarray,
     fs: float,
     percentile: float = 95,
-    max_surrogates: int = None,
     *wavelet_args,
     **wavelet_kwargs,
-) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray]:
+) -> Tuple[ndarray, ndarray, ndarray]:
     """
     For docstrings, please see the wrapper functions in 'pymodalib.algorithms'.
     """
@@ -345,21 +334,12 @@ def dual_group_coherence_impl(
             RuntimeWarning,
         )
 
-    recommended_surr = 19
-
-    if max_surrogates is not None and max_surrogates < recommended_surr:
-        warnings.warn(
-            f"Low number of surrogates: {max_surrogates}. A larger number of surrogates is recommended.",
-            RuntimeWarning,
-        )
-
     result1 = group_coherence_impl(
         group1_signals1,
         group1_signals2,
         fs,
         cleanup=False,
         percentile=percentile,
-        max_surrogates=max_surrogates,
         *wavelet_args,
         **wavelet_kwargs,
     )
@@ -369,17 +349,16 @@ def dual_group_coherence_impl(
         fs,
         cleanup=False,
         percentile=percentile,
-        max_surrogates=max_surrogates,
         *wavelet_args,
         **wavelet_kwargs,
     )
 
     pymodalib.cleanup()
 
-    freq, coh1, surr1 = result1
-    _, coh2, surr2 = result2
+    freq, coh1 = result1
+    _, coh2 = result2
 
     del result1
     del result2
 
-    return freq, coh1, coh2, surr1, surr2
+    return freq, coh1, coh2

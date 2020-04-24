@@ -21,10 +21,11 @@ Example of using the group coherence algorithm with NIRS data.
 import os
 
 import numpy as np
-import pymodalib
 import scipy.io
 from matplotlib import pyplot as plt
 from numpy import ndarray
+
+import pymodalib
 
 # Sampling frequency.
 fs = 31.25
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     group2_signals_b = load_mat("phd_Respiration_resampl.mat")
 
     # Calculate the group coherence.
-    freq, coh1, coh2, surr1, surr2 = pymodalib.dual_group_coherence(
+    freq, coh1, coh2 = pymodalib.dual_group_coherence(
         group1_signals_a, group1_signals_b, group2_signals_a, group2_signals_b, fs
     )
 

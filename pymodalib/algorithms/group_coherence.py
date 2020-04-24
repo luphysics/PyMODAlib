@@ -35,11 +35,10 @@ def group_coherence(
     signals_b: ndarray,
     fs: float,
     percentile: float = 95,
-    max_surrogates: int = None,
     cleanup: bool = True,
     *wavelet_args,
     **wavelet_kwargs,
-) -> Tuple[ndarray, ndarray, ndarray]:
+) -> Tuple[ndarray, ndarray]:
     """
     Group wavelet phase coherence algorithm. Calculates coherence for a single group, whose members each
     have a signal A and a signal B.
@@ -60,9 +59,6 @@ def group_coherence(
         The sampling frequency of the signals.
     percentile : float, optional
         (Default value = 95) The percentile of the surrogates which will be subtracted from the coherence.
-    max_surrogates : int, optional
-        (Default value = None) The maximum number of surrogates to use. You should usually leave this unchanged, but you may wish to use it
-        to reduce the time taken to perform the calculation.
     cleanup : bool, optional
         (Default value = True) Whether to clean up the cache folder after completion.
     wavelet_args : Any, optional
@@ -76,14 +72,11 @@ def group_coherence(
         [1D array] The frequencies.
     coh : ndarray
         [2D array] The residual coherence.
-    surr : ndarray
-        [3D array] The surrogates.
     """
     return group_impl(
         signals_a,
         signals_b,
         fs=fs,
-        max_surrogates=max_surrogates,
         cleanup=cleanup,
         percentile=percentile,
         *wavelet_args,
@@ -98,10 +91,9 @@ def dual_group_coherence(
     group2_signals_b: ndarray,
     fs: float,
     percentile: float = 95,
-    max_surrogates: int = None,
     *wavelet_args,
     **wavelet_kwargs,
-) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray]:
+) -> Tuple[ndarray, ndarray, ndarray]:
     """
     Group wavelet phase coherence algorithm. Calculates coherence for two groups, whose members each have
     a signal A and a signal B. The groups can be different sizes.
@@ -126,9 +118,6 @@ def dual_group_coherence(
         The sampling frequency of the signals.
     percentile : float, optional
         (Default value = 95) The percentile of the surrogates which will be subtracted from the coherence.
-    max_surrogates : int, optional
-        (Default value = None) The maximum number of surrogates to use. You should usually leave this unchanged,
-        but you may wish to use it to reduce the time taken to perform the calculation.
     wavelet_args : Any, optional
         Arguments to pass to the wavelet transform function.
     wavelet_kwargs : Any, optional
@@ -142,10 +131,6 @@ def dual_group_coherence(
         [2D array] The residual coherence for group 1.
     coh2 : ndarray
         [2D array] The residual coherence for group 2.
-    surr1 : ndarray
-        [3D array] The surrogates for group 1.
-    surr2 : ndarray
-        [3D array] The surrogates for group 2.
     """
     return dual_group_impl(
         group1_signals_a,
@@ -154,7 +139,6 @@ def dual_group_coherence(
         group2_signals_b,
         fs=fs,
         percentile=percentile,
-        max_surrogates=max_surrogates,
         *wavelet_args,
         **wavelet_kwargs,
     )
