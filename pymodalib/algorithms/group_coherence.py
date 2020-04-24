@@ -61,8 +61,10 @@ def group_coherence(
     percentile : float, optional
         (Default value = 95) The percentile of the surrogates which will be subtracted from the coherence.
     max_surrogates : int, optional
-        (Default value = None) The maximum number of surrogates to use. You should usually leave this unchanged, but you may wish to use it
-        to reduce the time taken to perform the calculation.
+        (Default value = None) The maximum number of surrogates to use.
+
+        .. note::
+            This has only a small effect on performance, so leaving it to the default value is recommended.
     cleanup : bool, optional
         (Default value = True) Whether to clean up the cache folder after completion.
     wavelet_args : Any, optional
@@ -127,8 +129,10 @@ def dual_group_coherence(
     percentile : float, optional
         (Default value = 95) The percentile of the surrogates which will be subtracted from the coherence.
     max_surrogates : int, optional
-        (Default value = None) The maximum number of surrogates to use. You should usually leave this unchanged,
-        but you may wish to use it to reduce the time taken to perform the calculation.
+        (Default value = None) The maximum number of surrogates to use.
+
+        .. note::
+            This has only a small effect on performance, so leaving it to the default value is recommended.
     wavelet_args : Any, optional
         Arguments to pass to the wavelet transform function.
     wavelet_kwargs : Any, optional
