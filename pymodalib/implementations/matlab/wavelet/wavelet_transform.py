@@ -16,7 +16,6 @@
 from typing import Tuple, Dict
 
 from numpy import ndarray
-
 from pymodalib.utils.decorators import matlabwrapper
 from pymodalib.utils.matlab import matlab_to_numpy
 from pymodalib.utils.parameters import sanitise, float_or_none
@@ -63,7 +62,9 @@ def wavelet_transform(
 
     package = WT.initialize()
 
-    wt, freq, opt = package.wt(
-        matlab.double(signal.tolist()), float(fs), kwargs, nargout=3
+    wt, freq, opt, wp = package.wt(
+        matlab.double(signal.tolist()), float(fs), kwargs, nargout=4
     )
-    return matlab_to_numpy(wt), matlab_to_numpy(freq), opt
+
+    wopt = {**opt, "wp": wp}
+    return matlab_to_numpy(wt), matlab_to_numpy(freq), wopt
