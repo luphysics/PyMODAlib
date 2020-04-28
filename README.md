@@ -41,7 +41,9 @@ PyMODAlib can be installed using `pip`. Open a terminal and run:
 pip install pymodalib
 ```
 
-> **Tip:** on macOS/Linux, replace `pip` with the correct command for your system (e.g. `pip3`).
+> **Tip:** On some systems, you may need to supply the `--user` flag; if the installation is not successful, try `pip install pymodalib --user`.
+
+> **Note:** On macOS/Linux, you may need to replace `pip` with the correct command for your system (e.g. `pip3`, `python -m pip` or `python3 -m pip`). 
 
 ### Updating PyMODAlib
 
@@ -57,19 +59,19 @@ pip install -U pymodalib
 
 | Feature | Implemented | Requires MATLAB Runtime | Notes |
 | --- | --- | --- | --- |
-| Wavelet transform | :heavy_check_mark: | No | Pass `implementation="python"` to use Python implementation | 
+| Wavelet transform | :heavy_check_mark: | No | Uses MATLAB Runtime unless `implementation="python"` is passed as a parameter | 
 | Wavelet phase coherence | :heavy_check_mark: | No | | 
-| Group coherence | :heavy_check_mark: | No | Pass `implementation="python"` to use Python implementation | 
+| Group coherence | :heavy_check_mark: | No | Uses MATLAB Runtime unless `implementation="python"` is passed as a parameter | 
 | Detecting harmonics | :heavy_check_mark: | No | |
 | Downsampling | :heavy_check_mark: | No | | 
 
-> :warning: Some functions may not be fully stable, and may change before `v1.0.0`.
+> :warning: The pure-Python implementation of the wavelet transform (used only when the `implementation="python"` parameter is supplied) may not be fully stable. Some function signatures may change before `v1.0.0`.
 
 ### Getting started
 
 #### Examples
 
-There are examples of using PyMODAlib's functionality in the [examples](https://github.com/luphysics/PyMODAlib/tree/master/examples) directory.
+There are examples of using PyMODAlib's functionality in the [examples](https://github.com/luphysics/PyMODAlib/tree/master/examples) directory. There should be an example for each function, which also demonstrates how to plot the results.
 
 To download the dependencies required to run the examples, open a terminal and run:
 
@@ -77,9 +79,13 @@ To download the dependencies required to run the examples, open a terminal and r
 pip install -U pymodalib matplotlib
 ```
 
-To try the examples, download the PyMODAlib repository [as a zip file](https://github.com/luphysics/PyMODAlib/zipball/master) or by using `git clone`, then run Python files from the `examples` subfolders.
+> **Tip:** If this causes problems, try the solutions outlined in the [Installing PyMODAlib](#installing-pymodalib) section.
+
+To try the examples, download the PyMODAlib repository [as a zip file](https://github.com/luphysics/PyMODAlib/zipball/master) or by using `git clone`, then run relevant Python files from the `examples` subfolders.
 
 ### PyMODAlib cache
+
+> **Note:** This section is only relevant when using the *group coherence* functions.
 
 The group coherence functions use a very large quantity of RAM. To mitigate this problem for machines with smaller RAM capacities, they will allocate arrays which are cached to disk. *This may result in significant disk usage.*
 
