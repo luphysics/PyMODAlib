@@ -17,6 +17,7 @@
 # Import functions to make them easily accessible.
 from pymodalib.algorithms.group_coherence import group_coherence, dual_group_coherence
 from pymodalib.algorithms.harmonics import harmonicfinder
+from pymodalib.algorithms.ridge_extraction import ridge_extraction, ecurve, rectfr
 from pymodalib.algorithms.signals import preprocess
 from pymodalib.algorithms.signals import resampl_flow as downsample
 from pymodalib.algorithms.wavelet import wavelet_transform
@@ -34,6 +35,9 @@ __imported = (
     wavelet_transform,
     windowed_fourier_transform,
     harmonicfinder,
+    ridge_extraction,
+    ecurve,
+    rectfr,
 )
 
 # Useful aliases for functions.
