@@ -18,9 +18,9 @@ from typing import Tuple, Dict, Union
 
 from numpy import ndarray
 
-from implementations.matlab.ridge_extraction import ecurve_impl, rectfr_impl
+from pymodalib.implementations.matlab.ridge_extraction import ecurve_impl, rectfr_impl
 from pymodalib.utils.matlab import matlab_to_numpy, multi_matlab_to_numpy
-from utils import reorient
+from pymodalib.utils import reorient
 
 
 def ridge_extraction(
