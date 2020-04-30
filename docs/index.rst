@@ -14,6 +14,7 @@ The following table displays the most important modules from PyMODAlib. To view 
    pymodalib.algorithms.coherence
    pymodalib.algorithms.group_coherence
    pymodalib.algorithms.harmonics
+   pymodalib.algorithms.ridge_extraction
    pymodalib.algorithms.signals
    pymodalib.algorithms.wavelet
    pymodalib.algorithms.windowed_fourier
