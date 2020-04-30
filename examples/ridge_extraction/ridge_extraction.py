@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-Example of using the ridge extraction algorithm.
+Example of using the ridge extraction algorithm. Calculates and plots the frequency ridge.
 """
 import os
 
@@ -29,6 +29,8 @@ if __name__ == "__main__":
     signal = np.load("../1signal_10Hz.npy")
 
     fs = 10
+
+    # Time values associated with the signal.
     times = np.arange(0, signal.size / fs, 1 / fs)
 
     # Frequency interval (0.07Hz-0.33Hz).
@@ -36,25 +38,26 @@ if __name__ == "__main__":
 
     # Note: your IDE may incorrectly display an error on this statement.
     wt, freq, wopt = pymodalib.wavelet_transform(
-        signal,
-        fs,
-        fmin=fmin,
-        fmax=fmax,
-        cut_edges=True,
-        return_opt=True,
-        implementation="matlab",
+        signal, fs, fmin=fmin, fmax=fmax, return_opt=True, implementation="matlab",
     )
 
     iamp, iphi, ifreq = pymodalib.ridge_extraction(wt, freq, fs, wopt=wopt)
 
-    ax1 = plt.subplot(311)
-    ax1.plot(times, iamp)
+    fig, ax = plt.subplots()
 
-    ax2 = plt.subplot(312)
-    ax2.plot(times, iphi)
-    ax2.pco
+    wt_amp = np.abs(wt)
+    mesh1, mesh2 = np.meshgrid(times, freq)
 
-    ax3 = plt.subplot(313)
-    ax3.plot(times, ifreq)
+    # Plot wavelet transform.
+    ax.contourf(mesh1, mesh2, wt_amp)
 
+    # Plot frequency ridge.
+    ax.plot(times, ifreq, color="red")
+
+    ax.set_title("Frequency ridge and wavelet transform")
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Frequency (Hz)")
+    ax.set_yscale("log")
+
+    fig.set_size_inches(9, 7)
     plt.show()
