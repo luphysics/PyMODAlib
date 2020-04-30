@@ -19,8 +19,8 @@ from typing import Tuple, Dict, Union
 from numpy import ndarray
 
 from pymodalib.implementations.matlab.ridge_extraction import ecurve_impl, rectfr_impl
-from pymodalib.utils.matlab import matlab_to_numpy, multi_matlab_to_numpy
 from pymodalib.utils import reorient
+from pymodalib.utils.matlab import matlab_to_numpy, multi_matlab_to_numpy
 
 
 def ridge_extraction(
@@ -30,7 +30,6 @@ def ridge_extraction(
     method: str = "direct",
     wopt: Dict = None,
     ecurve_kwargs: Dict = None,
-    rectfr_kwargs: Dict = None,
     **kwargs,
 ) -> Tuple[ndarray, ndarray, ndarray]:
     """
@@ -44,21 +43,53 @@ def ridge_extraction(
         Frequencies corresponding to the `tfr`.
     fs : float
         Sampling frequency of the signal.
-    method : str
-        # TODO
-    wopt
-    ecurve_kwargs
-    rectfr_kwargs
-    kwargs
+    method : {"direct", "ridge", "both"}
+        (Default = "direct") The reconstruction method to use for estimating the component's
+        parameters (`iamp`, `iphi`, `ifreq` - see [1]). If set to "both", all parameters are returned
+        as [2xL arraus] with direct and ridge estimates corresponding to the 1st and 2nd rows, respectively.
+    wopt : Dict
+        Dictionary returned by the wavelet transform function when the `return_opt=True` parameter is passed.
+        This should be used when possible.
+    ecurve_kwargs : Any
+        Dictionary containing keyword arguments to pass to the `ecurve` function.
+    kwargs : Any
+        Additional keyword arguments.
 
     Returns
     -------
+    iamp: ndarray
+        Component's amplitude, as reconstructed from `tfsupp` in the signal's time-frequency representation.
+    iphi : ndarray
+        Component's phase, as reconstructed... (see above)
+    ifreq : ndarray
+        Component's frequency, as reconstructed... (see above)
 
-    # TODO
+    Notes
+    -----
+    Author: Dmytro Iatsenko.
+
+    .. [1] D. Iatsenko, A. Stefanovska and P.V.E. McClintock,
+       "Linear and synchrosqueezed time-frequency representations revisited.
+       Part I: Overview, standards of use, related issues and algorithms."
+       {preprint:arXiv:1310.7215}
+    .. [2] D. Iatsenko, A. Stefanovska and P.V.E. McClintock,
+       "Linear and synchrosqueezed time-frequency representations revisited.
+       Part II: Resolution, reconstruction and concentration."
+       {preprint:arXiv:1310.7274}
+    .. [3] D. Iatsenko, A. Stefanovska and P.V.E. McClintock,
+       "On the extraction of instantaneous frequencies from ridges in
+       time-frequency representations of signals."
+       {preprint - arXiv:1310.7276}
     """
+    if not wopt:
+        warnings.warn(
+            f"'wopt' was not passed to the ridge extraction function. It's recommended that you "
+            f"get the value of 'wopt' by passing 'return_opt=True' to the wavelet transform,"
+            f"and pass it to the ridge extraction function."
+        )
+
     wopt = wopt or {}
     ecurve_kwargs = ecurve_kwargs or {}
-    rectfr_kwargs = rectfr_kwargs or {}
 
     if wopt.get("TFRname") == "WFT":
         warnings.warn(
@@ -79,14 +110,7 @@ def ridge_extraction(
     )
 
     iamp, iphi, ifreq = rectfr(
-        tfsupp,
-        tfr,
-        frequencies,
-        fs=fs,
-        wopt=wopt,
-        method=method,
-        **rectfr_kwargs,
-        **kwargs,
+        tfsupp, tfr, frequencies, fs=fs, wopt=wopt, method=method,
     )
 
     iamp = reorient(iamp)
@@ -121,6 +145,8 @@ def ecurve(
         [NFxL array] Time-frequency representation (wavelet transform or windowed Fourier transform), to extract from.
     frequencies : ndarray
         [NFx1 array] The frequencies corresponding to the rows of `tfr`.
+    fs : float
+        Sampling frequency of the signal.
     method : {"direct", "ridge", "both"}
         (Default = "direct") The reconstruction method to use for estimating the component's
         parameters (`iamp`, `iphi`, `ifreq`) (see [1]); if set to "both", all parameters are returned as [2xL arrays]
@@ -137,6 +163,9 @@ def ecurve(
         suitable normalization being determined based on the dependence of
         the mean TFR amplitude on frequency; setting `normalize` to True
         applies such a normalization.
+    wopt : Dict
+        Dictionary returned by the wavelet transform function when the `return_opt=True` parameter is passed.
+        This should be used when possible.
     path_optimize : bool
         (Default = True) Optimize the ridge curve over all possible trajectories (True) or
         use the one-step approach (False), see [3]; the path optimization
@@ -161,7 +190,22 @@ def ecurve(
         TFR amplitude peals (ridge points) in the first row, support lower bounds (referred to as `omega_-(t)/2/pi`
         in [1]) in the second row, and the upper bounds (referred to as `omega_+(t)/2/pi` in [1]) in the third row.
 
-    # TODO: finish docstring, add references.
+    Notes
+    -----
+    Author: Dmytro Iatsenko.
+
+    .. [1] D. Iatsenko, A. Stefanovska and P.V.E. McClintock,
+       "Linear and synchrosqueezed time-frequency representations revisited.
+       Part I: Overview, standards of use, related issues and algorithms."
+       {preprint:arXiv:1310.7215}
+    .. [2] D. Iatsenko, A. Stefanovska and P.V.E. McClintock,
+       "Linear and synchrosqueezed time-frequency representations revisited.
+       Part II: Resolution, reconstruction and concentration."
+       {preprint:arXiv:1310.7274}
+    .. [3] D. Iatsenko, A. Stefanovska and P.V.E. McClintock,
+       "On the extraction of instantaneous frequencies from ridges in
+       time-frequency representations of signals."
+       {preprint - arXiv:1310.7276}
     """
     tfsupp = ecurve_impl(
         tfr,
@@ -184,7 +228,7 @@ def ecurve(
 
 def rectfr(
     tfsupp: ndarray,
-    transform: ndarray,
+    tfr: ndarray,
     frequencies: ndarray,
     fs: float,
     wopt: Dict = None,
@@ -203,11 +247,16 @@ def rectfr(
 
         Alternatively, `tfsupp` can be supplied as a [1xL array] of the desired frequency profile; in this case, the
         algorithm will automatically select the time-frequency support around it and the corresponding peaks.
-    transform : ndarray, matlab.double
+    tfr : ndarray, matlab.double
         [NFxL array] The transform (wavelet transform or windowed Fourier transform), to which `tfsupp` corresponds.
         (Rows correspond to frequencies, columns to time.)
     frequencies : ndarray, matlab.double
         [NFx1 array] The frequencies corresponding to the rows of `transform`.
+    fs : float
+        Sampling frequency of the signal.
+    wopt : Dict
+        Dictionary returned by the wavelet transform function when the `return_opt=True` parameter is passed.
+        This should be used when possible.
     method : {"direct", "ridge", "both"}
         (Default = "direct") The reconstruction method to use for estimating the component's
         parameters (`iamp`, `iphi`, `ifreq`) (see [1]); if set to "both", all parameters are returned as [2xL arrays]
@@ -241,7 +290,7 @@ def rectfr(
     """
 
     iamp, iphi, ifreq = rectfr_impl(
-        tfsupp, transform, frequencies, fs=fs, method=method, wopt=wopt,
+        tfsupp, tfr, frequencies, fs=fs, method=method, wopt=wopt,
     )
 
     return multi_matlab_to_numpy(iamp, iphi, ifreq)
