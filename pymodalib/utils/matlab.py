@@ -13,32 +13,86 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
-from typing import List
+from typing import List, Union, Dict, Any
 
 import numpy as np
 from numpy import ndarray
 
 
-def matlab_to_numpy(arr) -> ndarray:
+def matlab_to_numpy(data: Union[ndarray, Dict]) -> Union[ndarray, Dict]:
     """
     Converts a matlab array to a numpy array. Can be much faster than simply calling "np.asarray()",
     for real arrays.
 
     Parameters
     ----------
-    arr : array_like
-        The MATLAB array to convert.
+    data : array_like, Dict
+        The MATLAB array to convert. If a dict, all values which are MATLAB arrays will be converted.
 
     Returns
     -------
-    ndarray:
-        The array, converted to a Numpy array.
+    ndarray, Dict
+        If an array was passed, returns an `ndarray`; otherwise, a dict whose values
+        have been converted to `ndarray` if necessary.
+    """
+    if isinstance(data, dict):
+        return __dict_convert(data)
+
+    return __array_convert(data)
+
+
+def __dict_convert(data: Dict) -> Dict:
+    """
+    Recursively converts a dict's values to `ndarray` types, if they are Matlab array types.
+
+    Works with:
+        - Dictionaries where only some of their values are Matlab array types.
+        - Nested dictionaries.
+        - Values which are Matlab array types.
+        - Values which are lists of Matlab array types.
+
+    Does not work with values which are nested lists of Matlab array types.
+
+    Parameters
+    ----------
+    data : Dict
+        Dictionary containing values, some of which may be Matlab array types. Can be a nested dictionary.
+
+    Returns
+    -------
+    Dict
+        Dictionary whose Matlab-type values have been converted to `ndarray` types.
+    """
+    for key, value in data.items():
+        if isinstance(value, dict):
+            data[key] = __dict_convert(value)
+
+        elif is_matlab_array(value):
+            data[key] = matlab_to_numpy(value)
+
+        elif isinstance(value, list) and all([is_matlab_array(i) for i in value]):
+            data[key] = [matlab_to_numpy(i) for i in value]
+
+    return data
+
+
+def is_matlab_array(value: Any) -> bool:
+    """
+    Returns whether a variable is a Matlab type.
+    """
+    return "mlarray" in f"{type(value)}"
+
+
+def __array_convert(data: "mlarray") -> ndarray:
+    """
+    Converts a Matlab array type to a `ndarray`.
     """
     try:
         # Should work for real arrays, maybe not for complex arrays.
-        result = np.array(arr._data).reshape(arr.size, order="F")
+        result = np.array(data._data).reshape(data.size, order="F")
     except:
-        result = np.array(arr)
+        result = np.array(data)
+
     return result
 
 
