@@ -15,15 +15,18 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 import glob
 import os
+import re
 from os import path
 from typing import List
 
 from setuptools import setup
 
-VERSION = "0.6.1b1"
-
 here = path.abspath(path.dirname(__file__))
 os.chdir(here)
+
+with open("pymodalib/__init__.py") as f:
+    regexp = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+b[0-9]+")
+    version = regexp.findall(f.read())[0]
 
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
@@ -50,7 +53,7 @@ def find_packages() -> List[str]:
 
 setup(
     name="PyMODAlib",
-    version=VERSION,
+    version=version,
     packages=find_packages(),
     python_requires=">=3.6",
     install_requires=requirements,

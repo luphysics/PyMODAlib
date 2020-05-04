@@ -24,6 +24,9 @@ from pymodalib.algorithms.wavelet import wavelet_transform
 from pymodalib.algorithms.windowed_fourier import windowed_fourier_transform
 from pymodalib.utils.cache import cachedarray, cleanup
 
+# PyMODAlib version.
+__version__ = "0.7.0b1"
+
 # This tuple isn't important; it just ensures that PyCharm doesn't try to remove unnecessary imports.
 __imported = (
     cachedarray,
