@@ -14,14 +14,28 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 import sys
-
-from pymodalib.utils.Platform import Platform
+import warnings
 
 from pymodalib.utils import matlab_runtime
-from pymodalib.utils.matlab_runtime import MatlabLibraryException, platform
+from pymodalib.utils.Platform import Platform
+from pymodalib.utils.matlab_runtime import (
+    MatlabLibraryException,
+    platform,
+    RuntimeStatus,
+)
 
 # Python 3.7 is the highest supported version for MATLAB-packaged libraries.
 max_python_version = (3, 7)
+
+msg_no_runtime = (
+    f"A compatible MATLAB Runtime version could not be found. "
+    + f"Please check the documentation "
+    + f"and install the compatible version.\n"
+    + f"If you're seeing this error after installing a correct version, please "
+    + f"close and re-open "
+    + f"your IDE and/or terminals, and if the problem persists, set the Runtime "
+    + f"library path:\n{matlab_runtime.get_link_to_runtime_docs()}"
+)
 
 
 def matlabwrapper(module):
@@ -29,6 +43,9 @@ def matlabwrapper(module):
     Decorator which marks a MATLAB wrapper: a function which calls a function from a MATLAB-packaged library.
 
     This will ensure that the required module is installed, and that the MATLAB Runtime is a valid version.
+
+    If the MATLAB Runtime seems to be installed at the default location, but the environment variables are
+    not set, it will set the environment variables.
 
     Parameters
     ----------
@@ -68,15 +85,21 @@ def matlabwrapper(module):
                     )
 
                 if not matlab_runtime.is_runtime_valid(runtime_versions):
-                    raise MatlabLibraryException(
-                        f"A compatible MATLAB Runtime version could not be found. "
-                        f"Please check the documentation "
-                        f"and install the compatible version.\n"
-                        f"If you're seeing this error after installing a correct version, please "
-                        f"close and re-open "
-                        f"your IDE and/or terminals, and if the problem persists, set the Runtime "
-                        f"library path:\n{matlab_runtime.get_link_to_runtime_docs()}"
+                    raise MatlabLibraryException(msg_no_runtime)
+            else:
+                status = matlab_runtime.get_runtime_status()
+
+                if status is RuntimeStatus.MAYBE_EXISTS:
+                    warnings.warn(
+                        "Trying to set MATLAB Runtime variables...", RuntimeWarning
                     )
+                    matlab_runtime.try_to_setup_runtime_variables()
+
+                elif status is RuntimeStatus.NOT_EXISTS:
+                    raise MatlabLibraryException(msg_no_runtime)
+
+                elif status is not RuntimeStatus.EXISTS:
+                    raise Exception("Unknown RuntimeStatus for MATLAB Runtime.")
 
             return func(*args, **kwargs)
 

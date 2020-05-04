@@ -14,10 +14,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-# The version of the MATLAB Runtime required.
 import os
 import re
 import warnings
+from enum import Enum
 from typing import List, Optional
 
 from pymodalib.utils.Platform import Platform
@@ -27,6 +27,129 @@ MATLAB_RUNTIME_VERSION = 96
 
 platform = Platform.get()
 regexp = re.compile("v[0-9]{2}")
+
+linux_runtime_var = "LD_LIBRARY_PATH"
+linux_runtime_path = (
+    f"/usr/local/MATLAB/MATLAB_Runtime/v{MATLAB_RUNTIME_VERSION}/runtime/glnxa64:"
+    f"/usr/local/MATLAB/MATLAB_Runtime/v{MATLAB_RUNTIME_VERSION}/bin/glnxa64:"
+    f"/usr/local/MATLAB/MATLAB_Runtime/v{MATLAB_RUNTIME_VERSION}/sys/os/glnxa64:"
+    f"/usr/local/MATLAB/MATLAB_Runtime/v{MATLAB_RUNTIME_VERSION}/extern/bin/glnxa64"
+)
+
+macos_runtime_var = "DYLD_LIBRARY_PATH"
+macos_runtime_path = (
+    f"/Applications/MATLAB/MATLAB_Runtime/v{MATLAB_RUNTIME_VERSION}/runtime/maci64:"
+    f"/Applications/MATLAB/MATLAB_Runtime/v{MATLAB_RUNTIME_VERSION}/bin/maci64:"
+    f"/Applications/MATLAB/MATLAB_Runtime/v{MATLAB_RUNTIME_VERSION}/sys/os/maci64:"
+    f"/Applications/MATLAB/MATLAB_Runtime/v{MATLAB_RUNTIME_VERSION}/extern/bin/maci64"
+)
+
+
+class RuntimeStatus(Enum):
+    """
+    Enum representing the status of the MATLAB Runtime.
+    """
+
+    EXISTS = 0
+    MAYBE_EXISTS = 1
+    NOT_EXISTS = 2
+
+
+def get_runtime_status() -> RuntimeStatus:
+    """
+    Gets the status of the Matlab Runtime.
+
+    Returns
+    -------
+    RuntimeStatus
+        The status of the MATLAB Runtime.
+    """
+    if platform is Platform.WINDOWS:
+        return RuntimeStatus.MAYBE_EXISTS
+    elif platform is Platform.LINUX:
+        return _get_runtime_status_linux()
+    elif platform is Platform.MAC_OS:
+        return _get_runtime_status_macos()
+
+
+def _split_path(path: str) -> List[str]:
+    """
+    Splits a path variable, like $PATH, so that each item is separated.
+
+    .. note::
+        This is for variables like $PATH, not for file paths.
+
+    Parameters
+    ----------
+    path : str
+        The path to split.
+
+    Returns
+    -------
+    List[str]
+        List containing each item from the path.
+    """
+    if not path:
+        return []
+
+    return path.split(os.pathsep)
+
+
+def _get_runtime_status_linux() -> RuntimeStatus:
+    """
+    Returns the RuntimeStatus for Linux.
+    """
+    spl = _split_path(linux_runtime_path)
+    env = os.environ.get(linux_runtime_var)
+
+    if (
+        env
+        and any([os.path.exists(i) for i in _split_path(env) if i])
+        and "runtime" in env.lower()
+    ):
+        return RuntimeStatus.EXISTS
+
+    if any(os.path.exists(p) for p in spl if p):
+        return RuntimeStatus.MAYBE_EXISTS
+
+    return RuntimeStatus.NOT_EXISTS
+
+
+def _get_runtime_status_macos() -> RuntimeStatus:
+    """
+    Returns the RuntimeStatus for macOS.
+    """
+    spl = _split_path(macos_runtime_path)
+    env = os.environ.get(macos_runtime_var)
+
+    if (
+        env
+        and any([os.path.exists(i) for i in _split_path(env) if i])
+        and "runtime" in env.lower()
+    ):
+        return RuntimeStatus.EXISTS
+
+    if any(os.path.exists(p) for p in spl if p):
+        return RuntimeStatus.MAYBE_EXISTS
+
+    return RuntimeStatus.NOT_EXISTS
+
+
+def try_to_setup_runtime_variables() -> None:
+    """
+    Attempts to setup the MATLAB Runtime environment variables.
+    """
+    if platform is Platform.LINUX:
+        var = linux_runtime_var
+        new = linux_runtime_path
+    elif platform is Platform.MAC_OS:
+        var = macos_runtime_var
+        new = macos_runtime_path
+    else:
+        raise Exception("Cannot try to setup Matlab Runtime on Windows.")
+
+    current = os.environ.get(var)
+    os.environ[var] = f"{new}:{current}" if current else new
 
 
 def is_runtime_valid(versions: List[int]) -> bool:
@@ -99,6 +222,19 @@ def get_path_items(platform: Platform) -> List[str]:
 
 
 def get_runtime_version_windows(var: str) -> Optional[int]:
+    """
+    Gets the version of the MATLAB Runtime on Windows from a value in an environment variable.
+
+    Parameters
+    ----------
+    var : str
+        The value of the item in the environment variable.
+
+    Returns
+    -------
+    version: int, None
+        If a version can be found, its integer representation is returned (e.g. `96`); otherwise, None.
+    """
     if "MATLAB Runtime" in var and "runtime" in var:
         substrings = regexp.findall(var)
         try:
@@ -139,7 +275,10 @@ def get_link_to_runtime_docs() -> str:
         The URL for the relevant page of the MATLAB documentation.
     """
     return {
-        Platform.WINDOWS.value: "https://uk.mathworks.com/help/matlab/matlab_external/building-and-running-engine-applications-on-windows-operating-systems.html",
-        Platform.LINUX.value: "https://uk.mathworks.com/help/matlab/matlab_external/set-run-time-library-path-on-linux-systems.html",
-        Platform.MAC_OS.value: "https://uk.mathworks.com/help/matlab/matlab_external/set-run-time-library-path-on-mac-systems.html",
+        Platform.WINDOWS.value: "https://uk.mathworks.com/help/matlab/matlab_external/building-and-running-eng"
+        "ine-applications-on-windows-operating-systems.html",
+        Platform.LINUX.value: "https://uk.mathworks.com/help/matlab/matlab_external/set-run-time-library-path"
+        "-on-linux-systems.html",
+        Platform.MAC_OS.value: "https://uk.mathworks.com/help/matlab/matlab_external/set-run-time-library-path"
+        "-on-mac-systems.html",
     }.get(platform.value)
