@@ -23,7 +23,7 @@ from typing import List, Optional
 from pymodalib.utils.Platform import Platform
 
 # The version of the MATLAB Runtime which is required by PyMODAlib.
-MATLAB_RUNTIME_VERSION = 96
+MATLAB_RUNTIME_VERSION = 98
 
 platform = Platform.get()
 regexp = re.compile("v[0-9]{2}")
