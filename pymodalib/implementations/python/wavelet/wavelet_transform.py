@@ -222,7 +222,6 @@ def wavelet_transform(
     wp: WindowParams,
     fmin: float = None,
     fmax: float = None,
-    fstep: str = "auto",  # TODO: investigate what this should do.
     padding: Union[int, str] = "predictive",
     rel_tolerance: float = 0.01,
     preprocess: bool = False,
