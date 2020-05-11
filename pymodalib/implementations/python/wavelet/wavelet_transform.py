@@ -282,7 +282,7 @@ def wavelet_transform(
             print(f"Optimal nv determined to be {nv}")
 
     freq = 2 ** (
-        arange(ceil(nv * np.log2(fmin)), np.floor(nv * np.log2(fmax))).conj().T / nv
+        arange(ceil(nv * np.log2(fmin)), np.floor(nv * np.log2(fmax)) + 1).conj().T / nv
     )
     SN = len(freq)
 
@@ -1644,6 +1644,7 @@ def sqeps(vfun, xp, lim1, lim2, racc, MIC, nlims):
 
 
 def fcast(sig, fs, NP, fint, *args):  # line1145
+    fint = [fint[0][0][0], fint[1]]
     MaxOrder = len(sig)
 
     if len(args) > 0:
@@ -1652,48 +1653,51 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
     w = []
     if len(args) > 1:
         w = np.asarray(args[1], dtype=np.float64)
+        w = w.reshape(w.size)
 
     rw = np.sqrt(w)
 
     WTol = 10 ** -8  # tolerance for cutting weighting.
-    Y = sig[:]
+    Y = sig
     if not isempty(rw):
         Y = rw * Y
 
-    L = nonzero(np.flipud(rw) / max(rw) >= WTol)[1][-1]
+    L = nonzero(np.flipud(rw) / max(rw) >= WTol)[0][-1]
+    L += 1  # Make L equivalent to Matlab version (due to Matlab's 1-based indexing).
 
-    T = (L + 1) / fs
-    t = arange(0, L + 1) / fs
+    T = L / fs
+    t = arange(0, L) / fs
 
-    w = w[-L + 1 :]  # level3
-    rw = rw[-L + 1 :]  # level3
-    Y = Y[-L + 1 :]  # level3
-    # w = w[-L - 1 :]  # level3
-    # rw = rw[-L - 1 :]  # level3
-    # Y = Y[-L - 1 :]  # level3
+    w = w[-L:]
+    rw = rw[-L:]
+    Y = Y[-L:]
 
-    MaxOrder = np.min([MaxOrder, np.floor(L + 1 / 3)])
+    MaxOrder = np.min([MaxOrder, np.floor(L / 3)])
 
-    FTol = 0.01 / T
-    rr = (1 + np.sqrt(5)) / 2
-    Nq = np.ceil((L + 1) / 2)
-    ftfr = (
-        np.concatenate([np.arange(0, Nq), -np.flip(np.arange(1, L - Nq + 1))]) * fs / L
-    )
+    FTol = 0.01 / T  # Accuracy of frequencies determination.
+
+    rr = (
+        1 + np.sqrt(5)
+    ) / 2  # Multiplier to easily use golden section search afterwards.
+
+    # FT frequencies.
+    Nq = np.ceil(L / 2)
+    ftfr = np.concatenate([np.arange(0, Nq), -np.flip(np.arange(1, L - Nq))]) * fs / L
+
+    # Standard deviation of original signal.
     orstd = np.std(Y)
 
     v = np.zeros(L, dtype=np.float64)
-    ic = v
-    frq = v
-    amp = v
-    phi = v
+    ic = v.copy()
+    frq = v.copy()
+    amp = v.copy()
+    phi = v.copy()
     itn = 0
 
     while itn < MaxOrder:
         itn += 1
         aftsig = abs(fft(Y, axis=0))
 
-        aftsig = aftsig.reshape(aftsig.shape[1])
         Nq = int(Nq)
 
         imax = argmax(aftsig[1 : Nq - 1])
@@ -1702,53 +1706,57 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
         # Forward search
         nf = ftfr[imax]
 
-        FM1 = np.ones((L + 1, 1), dtype=np.float64)
-        FM2 = np.cos(2 * np.pi * nf * t.reshape(len(t), 1))
-        FM3 = np.sin(2 * np.pi * nf * t.reshape(len(t), 1))
+        FM1 = np.ones((L, 1), dtype=np.float64)
+        FM2 = np.cos(2 * np.pi * nf * t.reshape(t.size, 1))
+        FM3 = np.sin(2 * np.pi * nf * t.reshape(t.size, 1))
         FM = hstack([FM1, FM2, FM3])
 
         if not isempty(rw):
-            FM = FM * (rw.T * np.ones((1, 3)))
+            FM = FM * np.vstack((rw, rw, rw)).T
 
-        nb = backslash(FM, Y.T)  # level3
+        nb = backslash(FM, Y)
 
         s = FM @ nb
         nerr = np.std(Y - s)
 
+        #
+        # ============= Forward search ==============
+        #
+
+        # Starting frequency step and "previous error".
         df = FTol
         perr = np.inf
         while nerr < perr:
-            if abs(nf - fs / 2 + FTol) < eps:  # level3 eps
+            if abs(nf - fs / 2 + FTol) < eps:
                 break
 
             pf = nf
             perr = nerr
             pb = nb
-            nf = min([pf + df, fs / 2 - FTol])
+            nf = np.min([pf + df, fs / 2 - FTol])
 
-            FM1 = np.ones(L + 1, dtype=np.float64)
-            FM2 = np.cos(2 * np.pi * nf * t)
-            FM3 = np.sin(2 * np.pi * nf * t)
-            FM = np.asarray([FM1, FM2, FM3], dtype=np.float64)
+            FM1 = np.ones((L, 1,), dtype=np.float64)
+            FM2 = np.cos(2 * np.pi * nf * t.reshape(t.size, 1))
+            FM3 = np.sin(2 * np.pi * nf * t.reshape(t.size, 1))
+            FM = hstack([FM1, FM2, FM3])
 
             if not isempty(rw):
-                FM = FM.T * (rw.T * np.ones((1, 3)))
+                FM = FM * np.vstack((rw, rw, rw)).T
 
-            nb = backslash(FM, Y.T)  # level3
+            nb = backslash(FM, Y)
             nerr = np.std(Y - s)
-            df = df * rr
 
-        # Use golden section search to find exact minimum
+            df *= rr
+
+        # Use golden section search to find exact minimum.
         if nerr < perr:
             cf = [nf, nf, nf]
             cerr = [nerr, nerr, nerr]
             cb = [nb, nb, nb]
-
         elif abs(nf - pf - FTol) < eps:
             cf = [pf, pf, pf]
             cerr = [perr, perr, perr]
             cb = [pb, pb, pb]
-
         else:
             cf = [0, pf, nf]
             cerr = [0, perr, nerr]
@@ -1763,25 +1771,24 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
             ).T
             if not isempty(rw):
                 FM = FM * (rw.T * np.ones((1, 3)))
+
             temp_res = np.linalg.lstsq(FM, Y.T, rcond=None)  # level3
             cb[1] = temp_res[0].squeeze()
             cerr[1] = np.std(Y.T - FM * cb[1])
 
         while cf[1] - cf[0] > FTol and cf[2] - cf[1] > FTol:
             tf = cf[0] + cf[2] - cf[1]
-            FM = np.array(
-                [np.ones((L + 1,)), np.cos(twopi * tf * t), np.sin(twopi * tf * t)]
-            ).T
-            # FM = [
-            #    np.ones(L + 1, 1),
-            #    np.cos(2 * np.pi * tf * t),
-            #    np.sin(2 * np.pi * tf * t),
-            # ]
-            if not isempty(rw):
-                FM = FM * (rw.T * np.ones((1, 3)))
 
-            tb = backslash(FM, Y.T)
-            terr = np.std(Y.T - FM * tb.T)
+            FM1 = np.ones((L, 1,), dtype=np.float64)
+            FM2 = np.cos(2 * np.pi * tf * t.reshape(t.size, 1))
+            FM3 = np.sin(2 * np.pi * tf * t.reshape(t.size, 1))
+            FM = hstack([FM1, FM2, FM3])
+
+            if not isempty(rw):
+                FM = FM * np.vstack((rw, rw, rw)).T
+
+            tb = backslash(FM, Y)
+            terr = np.std(Y - FM * tb.T)
 
             if terr < cerr[1] and tf < cf[1]:  # TODO: fix all indices?
                 cf = [cf[0], tf, cf[1]]
@@ -1802,17 +1809,23 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
 
         # Forward values.
         fcf = cf[1]
-        fcb = cb[1]  # level2
+        fcb = cb[1]
         fcerr = cerr[1]
 
-        # Backward search
+        #
+        # ============= Backward search ==============
+        #
+        nf = ftfr[imax]
 
-        vf = ftfr[imax]
+        FM1 = np.ones(L, dtype=np.float64)
+        FM2 = np.cos(2 * np.pi * nf * t)
+        FM3 = np.sin(2 * np.pi * nf * t)
+        FM = vstack([FM1, FM2, FM3])
 
         if not isempty(rw):
-            FM = FM * np.ones((1, 3))
+            FM = FM.T * np.vstack((rw, rw, rw)).T
 
-        nb = backslash(FM, Y.T)  # level3
+        nb = backslash(FM, Y)
 
         s = FM @ nb
         nerr = np.std(Y - s)
@@ -1822,18 +1835,19 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
         while nerr < perr:
             if abs(nf - FTol) < eps:
                 break
+
             pf = nf
             perr = nerr
             pb = nb
             nf = np.max([pf - df, FTol])
 
-            FM1 = np.ones(L + 1, dtype=np.float64)
+            FM1 = np.ones(L, dtype=np.float64)
             FM2 = np.cos(2 * np.pi * nf * t)
             FM3 = np.sin(2 * np.pi * nf * t)
-            FM = np.asarray([FM1, FM2, FM3], dtype=np.float64)
+            FM = vstack([FM1, FM2, FM3])
 
             if not isempty(rw):
-                FM = FM.T * (rw.T * np.ones((1, 3)))
+                FM = FM.T * np.vstack((rw, rw, rw)).T
 
             nb = backslash(FM, Y.T)
             nerr = np.std(Y - FM @ nb)
@@ -1845,58 +1859,66 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
             cf = [nf, nf, nf]
             cerr = [nerr, nerr, nerr]
             cb = [nb, nb, nb]
-
         elif abs(nf - pf - FTol) < eps:
             cf = [pf, pf, pf]
             cerr = [perr, perr, perr]
             cb = [pb, pb, pb]
-
         else:
-            cf = [0, pf, nf]
-            cerr = [0, perr, nerr]
-            cb = [np.zeros((len(pb), 1)), pb, nb]
-            cf[1] = pf - df / rr / rr
+            cf = [nf, pf, 0]
+            cerr = [nerr, perr, 0]
+            cb = [nb, pb, np.zeros((len(pb), 1,))]
+            cf[2] = pf + df / rr / rr
 
-            FM1 = np.ones(L + 1, dtype=np.float64)
-            FM2 = np.cos(2 * np.pi * nf * t)
-            FM3 = np.sin(2 * np.pi * nf * t)
-            FM = np.asarray([FM1, FM2, FM3], dtype=np.float64)
+            FM1 = np.ones((L, 1,), dtype=np.float64)
+            FM2 = np.cos(2 * np.pi * cf[0] * t.reshape(t.size, 1))
+            FM3 = np.sin(2 * np.pi * cf[0] * t.reshape(t.size, 1))
+            FM = hstack([FM1, FM2, FM3])
 
             if not isempty(rw):
-                FM = FM.T * (rw.T * np.ones((1, 3)))
+                FM = FM * np.vstack((rw, rw, rw)).T
 
-            cb[1] = backslash(FM, Y.T)  # level3
-            cerr[1] = np.std(Y - FM @ cb[1])
+            cb[2] = backslash(FM, Y)
+            cerr[2] = np.std(Y - FM @ cb[2])
 
-        while cf[2] - cf[1] > FTol and cf[3] - cf[2] > FTol:
-            tf = cf[1] + cf[3] - cf[2]
-            FM = [np.ones(L, 1), np.cos(2 * np.pi * tf * t), np.sin(2 * np.pi * tf * t)]
+        while cf[1] - cf[0] > FTol and cf[2] - cf[1] > FTol:
+            tf = cf[0] + cf[2] - cf[1]
+
+            FM1 = np.ones(L, dtype=np.float64)
+            FM2 = np.cos(2 * np.pi * tf * t)
+            FM3 = np.sin(2 * np.pi * tf * t)
+            FM = vstack([FM1, FM2, FM3])
+
             if not isempty(rw):
-                FM = FM * (rw * np.ones(1, 3))
-            tb = np.linalg.lstsq(FM, Y)
-            terr = np.std(Y - FM * tb)
+                FM = FM.T * np.vstack((rw, rw, rw)).T
 
-            if terr < cerr[2] and tf < cf[2]:  # TODO: fix all indices?
+            tb = backslash(FM, Y)
+            terr = np.std(Y - FM @ tb)
+
+            if terr < cerr[1] and tf < cf[1]:  # TODO: fix all indices?
+                cf = [cf[0], tf, cf[1]]
+                cerr = [cerr[0], terr, cerr[1]]
+                cb = [cb[0], tb[:], cb[1]]
+            if terr < cerr[1] and tf > cf[1]:
                 cf = [cf[1], tf, cf[2]]
-                cerr = [cerr(1), terr, cerr(2)]
+                cerr = [cerr[1], terr, cerr[2]]
                 cb = [cb[1], tb[:], cb[:2]]
-            if terr < cerr[2] and tf > cf[2]:
-                cf = [cf[2], tf, cf[3]]
-                cerr = [cerr[2], terr, cerr[3]]
-                cb = [cb[2], tb[:], cb[:3]]
-            if terr > cerr[2] and tf < cf[2]:
-                cf = [tf, cf(2), cf(3)]
-                cerr = [terr, cerr[2], cerr[3]]
-                cb = [tb[:], cb[2], cb[3]]
-            if terr > cerr[2] and tf > cf[2]:
-                cf = [cf[1], cf[2], tf]
-                cerr = [cerr[1], cerr[2], terr]
-                cb = [cb[1], cb[2], tb[:]]
-        bcf = cf[2]
-        bcb = cb[2]
-        bcerr = cerr[2]
+            if terr > cerr[1] and tf < cf[1]:
+                cf = [tf, cf[1], cf[2]]
+                cerr = [terr, cerr[1], cerr[2]]
+                cb = [tb[:], cb[1], cb[2]]
+            if terr > cerr[1] and tf > cf[1]:
+                cf = [cf[0], cf[1], tf]
+                cerr = [cerr[0], cerr[1], terr]
+                cb = [cb[0], cb[1], tb[:]]
 
-        # Assign values and subtract
+        # Backward values
+        bcf = cf[1]
+        bcb = cb[1]
+        bcerr = cerr[1]
+
+        #
+        # ============= Assign values and subtract =============
+        #
         if fcerr < bcerr:
             cf = fcf
             cb = fcb
@@ -1906,51 +1928,54 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
             cb = bcb
             cerr = bcerr
 
-        frq[itn + 1] = cf
-        amp[itn + 1] = np.sqrt(cb[1] ** 2 + cb[2] ** 2)
-        phi[itn + 1] = np.arctan2(-cb[2], cb[1])
-        amp[1] = amp[0] + cb[0]
-        v[itn] = cerr
+        frq[itn] = cf
+        amp[itn] = np.sqrt(cb[1] ** 2 + cb[2] ** 2)
+        phi[itn] = np.arctan2(-cb[2], cb[1])
+        amp[0] = amp[0] + cb[0]
+        v[itn - 1] = cerr
 
-        FM1 = np.ones(L + 1, dtype=np.float64)
-        FM2 = np.cos(2 * np.pi * nf * t)
-        FM3 = np.sin(2 * np.pi * nf * t)
+        FM1 = np.ones(L, dtype=np.float64)
+        FM2 = np.cos(2 * np.pi * cf * t)
+        FM3 = np.sin(2 * np.pi * cf * t)
         FM = np.asarray([FM1, FM2, FM3], dtype=np.float64)
 
-        # if not isempty(rw):
-        #     temp = rw.reshape(len(rw), 1) * np.ones((1, 3), dtype=np.float64)
-        #     FM = FM.transpose() * temp
-
         if not isempty(rw):
-            FM = FM.T * (rw.T * np.ones((1, 3)))
-            Y = Y - FM @ cb
+            FM = FM.T * np.vstack((rw, rw, rw)).T
 
+        Y = Y - FM @ cb
+
+        #
+        # ============= Information criterion =============
+        #
         CK = 3 * itn + 1
-        cic = L * np.log(cerr) + CK * np.log(L)
+        cic = L * np.log(cerr) + CK * np.log(L)  # Bayesian (Schwarz) IC
 
-        ic[itn] = cic
-        if v[itn] / orstd < 2 * eps:
+        ic[itn - 1] = cic
+        if v[itn - 1] / orstd < 2 * eps:
             break
-        if itn > 2 and cic > ic[itn - 1] and cic[itn - 1] > ic[itn - 2]:
+        if itn > 2 and cic > ic[itn - 2] > ic[itn - 3]:
             break
 
-    frq = frq[1 : itn + 1]
-    amp = amp[1 : itn + 1]
-    phi = phi[1 : itn + 1]
-    v = v[1:itn]
-    ic = ic[1:itn]
+    frq = frq[: itn + 2]
+    amp = amp[: itn + 2]
+    phi = phi[: itn + 2]
 
-    fsig = zeros(np.int(NP))
-    nt = (np.arange(T, T + (np.int(NP) - 1), 1 / fs) / fs).T
+    NP = int(NP)
+    fsig = zeros(NP)
+    nt = np.arange(T, T + NP / fs, 1 / fs)
 
-    if (sig.shape[1] if len(sig.shape) > 1 else 1) > sig.shape[0]:
-        fsig = fsig.transpose()
-        nt = nt.transpose()
-    for k in range(1, len(frq)):
-        if frq[k] > fint(1) and frq(k) < fint(2):
-            fsig = fsig + amp(k) * np.cos(twopi * frq(k) * nt + phi(k))
+    try:
+        if sig.shape[1] > sig.shape[0]:
+            fsig = fsig.T
+            nt = nt.T
+    except:
+        pass
+
+    for k in range(len(frq)):
+        if fint[0] < frq[k] < fint[1]:
+            fsig = fsig + amp[k] * np.cos(twopi * frq[k] * nt + phi[k])
         else:
-            fsig = fsig + amp(k) * np.cos(twopi * frq(k) * (T - 1 / fs) + phi(k))
+            fsig = fsig + amp[k] * np.cos(twopi * frq[k] * (T - 1 / fs) + phi[k])
 
     return fsig
 

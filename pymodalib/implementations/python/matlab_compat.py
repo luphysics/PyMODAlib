@@ -62,7 +62,7 @@ def is_arraylike(value):
 
 def backslash(x, y):
     """Imitates the MATLAB backslash operator."""
-    return np.linalg.lstsq(x, y, rcond=None)[0]  # TODO: check this
+    return np.linalg.lstsq(x, y, rcond=None)[0]
 
 
 def nextpow2(x):
