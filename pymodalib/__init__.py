@@ -18,7 +18,7 @@
 from pymodalib.algorithms.group_coherence import group_coherence, dual_group_coherence
 from pymodalib.algorithms.harmonics import harmonicfinder
 from pymodalib.algorithms.ridge_extraction import ridge_extraction, ecurve, rectfr
-from pymodalib.algorithms.signals import preprocess
+from pymodalib.algorithms.signals import preprocess, generate_times
 from pymodalib.algorithms.signals import resampl_flow as downsample
 from pymodalib.algorithms.wavelet import wavelet_transform
 from pymodalib.algorithms.windowed_fourier import windowed_fourier_transform
@@ -35,6 +35,7 @@ __imported = (
     dual_group_coherence,
     downsample,
     preprocess,
+    generate_times,
     wavelet_transform,
     windowed_fourier_transform,
     harmonicfinder,

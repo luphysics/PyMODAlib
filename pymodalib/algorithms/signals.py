@@ -107,3 +107,31 @@ def preprocess(
 
     """
     return preprocess_impl(signal, fs, fmin, fmax)
+
+
+def generate_times(signal: ndarray, fs: float,) -> ndarray:
+    """
+    Generates the time values associated with a signal, starting from t=0.
+
+    Parameters
+    ----------
+    signal : ndarray
+        The signal to generate time values for.
+    fs : float
+        The sampling frequency of the signal.
+
+    Returns
+    -------
+    times : ndarray
+        The times associated with the signal.
+    """
+    try:
+        x, y = signal.shape
+        if y > x:
+            x, y = y, x
+
+        L = x
+    except ValueError:
+        L = len(signal)
+
+    return np.arange(0, L / fs, 1 / fs)
