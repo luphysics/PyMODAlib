@@ -63,7 +63,12 @@ if __name__ == "__main__":
 
     # Calculate the group coherence.
     freq, coh1, coh2 = pymodalib.dual_group_coherence(
-        group1_signals_a, group1_signals_b, group2_signals_a, group2_signals_b, fs
+        group1_signals_a,
+        group1_signals_b,
+        group2_signals_a,
+        group2_signals_b,
+        fs,
+        implementation="python",
     )
 
     # Save the results as a data file.
