@@ -229,6 +229,8 @@ def wavelet_transform(
     cut_edges: bool = False,
     nv: int = None,
     return_opt: bool = False,
+    *args,
+    **kwargs,
 ):
     try:
         x, y = signal.shape
@@ -1644,7 +1646,10 @@ def sqeps(vfun, xp, lim1, lim2, racc, MIC, nlims):
 
 
 def fcast(sig, fs, NP, fint, *args):  # line1145
-    fint = [fint[0][0][0], fint[1]]
+    # The first element of 'fint' can be a nested array, so flatten it.
+    while hasattr(fint[0], "__len__"):
+        fint = [fint[0][0], fint[1]]
+
     MaxOrder = len(sig)
 
     if len(args) > 0:
