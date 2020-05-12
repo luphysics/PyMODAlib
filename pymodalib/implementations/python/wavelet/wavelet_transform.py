@@ -1978,9 +1978,16 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
 
     for k in range(len(frq)):
         if fint[0] < frq[k] < fint[1]:
-            fsig = fsig + amp[k] * np.cos(twopi * frq[k] * nt + phi[k])
+            try:
+                # Sometimes 'nt' is one longer than 'fsig'.
+                if len(nt) > len(fsig):
+                    nt = nt[len(nt) - len(fsig)]
+            except:
+                pass
+
+            fsig += amp[k] * np.cos(twopi * frq[k] * nt + phi[k])
         else:
-            fsig = fsig + amp[k] * np.cos(twopi * frq[k] * (T - 1 / fs) + phi[k])
+            fsig += amp[k] * np.cos(twopi * frq[k] * (T - 1 / fs) + phi[k])
 
     return fsig
 
