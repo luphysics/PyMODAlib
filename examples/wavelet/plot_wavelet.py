@@ -18,6 +18,8 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
+import pymodalib
+
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
 print("Plotting...")
@@ -39,7 +41,7 @@ mesh1, mesh2 = np.meshgrid(times, freq)
 
 fig, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={"width_ratios": [3, 1,]}, sharey=True)
 
-ax1.contourf(mesh1, mesh2, wt_power)
+pymodalib.contourf(ax1, mesh1, mesh2, wt_power)
 ax1.set_title(f"WT power ({impl} implementation)")
 ax1.set_xlabel("Time (s)")
 

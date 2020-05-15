@@ -55,6 +55,8 @@ setup(
     name="PyMODAlib",
     version=version,
     packages=find_packages(),
+    include_package_data=True,
+    package_data={"": ["*.mat"]},
     python_requires=">=3.6",
     install_requires=requirements,
     description="Library providing Python implementations of MODA's algorithms.",
