@@ -20,8 +20,17 @@ from numpy import ndarray
 
 
 def contourf(
-    axes, x: ndarray, y: ndarray, z: ndarray, levels: int = 256, *args, **kwargs
-) -> None:
+    axes,
+    x: ndarray,
+    y: ndarray,
+    z: ndarray,
+    levels: int = 256,
+    vmin=None,
+    vmax=None,
+    cmap=None,
+    *args,
+    **kwargs
+) -> "matplotlib.contour.QuadContourSet":
     """
     Plots a contour plot in PyMODA style. Useful for easily plotting a wavelet transform, etc.
 
@@ -46,19 +55,23 @@ def contourf(
 
         If array-like, draw contour lines at the specified levels. The values must be in increasing order.
 
+    Returns
+    -------
+    matplotlib.contour.QuadContourSet
+        The value returned by matplotlib's `contourf`.
+
     .. note::
         Documentation copied from the relevant matplotlib function, `matplotlib.pyplot.contourf`.
     """
-    axes.contourf(
-        x,
-        y,
-        z,
-        levels,
-        vmin=np.nanmin(z),
-        vmax=np.nanmax(z),
-        cmap=colormap(),
-        *args,
-        **kwargs
+    if vmin is None:
+        vmin = np.nanmin(z)
+    if vmax is None:
+        vmax = np.nanmax(z)
+    if cmap is None:
+        cmap = colormap()
+
+    return axes.contourf(
+        x, y, z, levels, vmin=vmin, vmax=vmax, cmap=cmap, *args, **kwargs
     )
 
 
