@@ -23,8 +23,10 @@ import scipy.integrate
 import scipy.optimize
 import scipy.special as spec
 from numpy import ndarray
+from pymodalib.utils import reorient
 from scipy.sparse.linalg.isolve.lsqr import eps
 
+import pymodalib
 from pymodalib.implementations.python.matlab_compat import *
 
 fwtmax = "fwtmax"
@@ -232,12 +234,7 @@ def wavelet_transform(
     *args,
     **kwargs,
 ):
-    try:
-        x, y = signal.shape
-        if x < y:
-            signal = signal.reshape(y)
-    except ValueError:
-        pass
+    signal = pymodalib.utils.reorient(signal)
 
     p = 1  # WT normalisation.
 
@@ -280,6 +277,7 @@ def wavelet_transform(
 
         wp.nv = Nb * log(2) / log(wp.xi2h / wp.xi1h)
         nv = ceil(wp.nv)
+
         if disp_mode:
             print(f"Optimal nv determined to be {nv}")
 
@@ -311,6 +309,8 @@ def wavelet_transform(
     if padding == "predictive":
         pow = (-(L / fs - np.arange(1, L + 1) / fs)) / (wp.t2h - wp.t1h)
         w = 2 ** pow
+
+        # TODO: this is inaccurate.
         padleft = fcast(
             np.flip(signal),
             fs,
@@ -319,8 +319,9 @@ def wavelet_transform(
             min([np.ceil(SN / 2) + 5, np.round(L / 3)]),
             w,
         )
-
         padleft = np.flip(padleft)
+
+        # TODO: this is inaccurate.
         padright = fcast(
             signal,
             fs,
@@ -329,6 +330,8 @@ def wavelet_transform(
             min([np.ceil(SN / 2) + 5, np.round(L / 3)]),
             w,
         )
+
+        # Detrend one more time.
         dflag = 1
     elif is_number(padding):
         padleft = np.ones((n1,)) * float(padding)
@@ -340,13 +343,19 @@ def wavelet_transform(
         n1 = 0
         n2 = 0
 
-    signal = concat([padleft, signal, padright])
+    # TODO: This is inaccurate because 'padleft' and 'padright' are inaccurate.
+    signal = np.concatenate([padleft, signal, padright])
+    if preprocess and dflag == 1:
+        signal = preprocess(signal, fs, fmin, fmax)
 
-    Nq = np.ceil((NL + 1) / 2)
+    Nq = int(np.ceil((NL + 1) / 2))
 
-    ff = concat([np.arange(0, Nq), -arange(1, NL - Nq)[::-1]]) * fs / NL
+    ff = np.concatenate([np.arange(0, Nq), -arange(1, NL - Nq)[::-1]]) * fs / NL
 
-    fx = np.fft.fft(signal, np.int(NL), axis=0)
+    NL = int(NL)
+    fx = np.fft.fft(
+        signal, NL, axis=0
+    )  # TODO: This is inaccurate because the signal is inaccurate.
     if preprocess:
         try:
             indices = ((ff <= np.max([fmin, fs / L])) | (ff >= fmax)).nonzero()[1]
@@ -354,20 +363,26 @@ def wavelet_transform(
         except IndexError:
             pass
 
-    WT = np.zeros((SN, L), dtype=np.complex64) * np.NaN
+    WT = np.empty((SN, L), dtype=np.complex64)
+    WT.fill(np.NaN)
     ouflag = 0
+
     if (wp.t2e - wp.t1e) * wp.ompeak / (2 * np.pi * fmax) > L / fs:
-        coib1 = np.zeros(coib1.shape)
-        coib2 = np.zeros(coib2.shape)
+        coib1.fill(0)
+        coib2.fill(0)
 
     for sn in range(0, SN):
+        # Frequencies for the wavelet function.
         freqwf = ff * wp.ompeak / (twopi * freq[sn])
+
+        # Only take into account the frequencies within the wavelet support.
         ii = nonzero((wp.xi1 / twopi < freqwf) & (freqwf < wp.xi2 / twopi))[0]
 
         if not isempty(fwt):
             fw = fwt(twopi * freqwf[ii]).conj()
             nid = nonzero((isnan(fw)) | (~isfinite(fw)))[0]
 
+            # Avoid NaNs due to numerics, e.g. sin(0)/0
             if not isempty(nid):
                 fw[nid] = fwt(twopi * freqwf[ii[nid]] + 10 ** -14).conj()
                 nid = nonzero((isnan(fw)) | (~isfinite(fw)))[0]
@@ -384,10 +399,12 @@ def wavelet_transform(
                 ]
             ).conj().T
 
+            # Only take into account the frequencies within the wavelet support.
             jj = nonzero((timewf > wp.t1) & (timewf < wp.t2))
             tw = np.zeros((NL, 1))
             tw[jj] = twf[timewf[jj]].conj()
 
+            # Avoid NaNs due to numerics, e.g. sin(0)/0
             nid = nonzero((isnan(tw)) | (~isfinite(tw)))[0]
             if not isempty(nid):
                 tw[nid] = twf[timewf[nid] + 10 ** -14]
@@ -395,30 +412,40 @@ def wavelet_transform(
                 if not isempty(nid):
                     ouflag = 1
                     ouval = timewf[nid[0]]
+
             fw = 1 / fs * np.fft.fft(tw, axis=0)
             fw = fw[ii]
 
-        cc = zeros(np.int(NL), dtype=np.complex64)
-        cc[ii] = fx[ii] * fw[:]
+        cc = zeros(int(NL), dtype=np.complex64)
 
+        # Convolution in the frequency domain.
+        cc[ii] = fx[ii] * fw[:]  # TODO: 'fx' is inaccurate. 'fw' is fine.
+
+        # Calculate WT at each time.
         out = (wp.ompeak / (twopi * freq[sn])) ** (1 - p) * np.fft.ifft(cc, NL, axis=0)
 
-        n1 = np.int(n1)
-        n2 = np.int(n2)
-        NL = np.int(NL)
+        n1 = int(n1)
+        n2 = int(n2)
+        NL = int(NL)
 
         WT[sn, arange(0, L)] = out[n1 : NL - n2]
 
     if cut_edges:
         icoib = nonzero((L - coib1 - coib2) <= 0)[0]
         WT[icoib, :] = np.nan
+
         ovL = int(np.ceil(np.sum(coib1 + coib2) - L * len(icoib)))
-        frn = np.empty((ovL,)) * np.nan
-        ttn = np.empty((ovL,)) * np.nan
+        frn = np.empty((ovL,))
+        frn.fill(np.NaN)
+
+        ttn = np.empty((ovL,))
+        ttn.fill(np.NaN)
+
         qn = 0
         for fn in range(SN):
             cL = int(coib1[fn] + coib2[fn])
-            if cL > 0 and cL < L:
+
+            if 0 < cL < L:
                 frn[qn : qn + cL] = fn
                 ttn[qn : qn + cL] = concat(
                     [np.arange(int(coib1[fn])), np.arange(L - int(coib2[fn]), L)]
@@ -427,11 +454,12 @@ def wavelet_transform(
 
         frn = frn[:qn]
         ttn = ttn[:qn]
+
         WT.ravel()[
             np.ravel_multi_index(
                 [frn.astype(np.int), ttn.astype(np.int)], dims=WT.shape
             )
-        ] = np.nan
+        ] = np.NaN
 
     if return_opt:
         if isinstance(fmin, ndarray):
@@ -1645,7 +1673,36 @@ def sqeps(vfun, xp, lim1, lim2, racc, MIC, nlims):
     return QQ, wflag, xx, ss
 
 
-def fcast(sig, fs, NP, fint, *args):  # line1145
+def fcast(
+    sig, fs, NP, fint, *args
+) -> ndarray:  # Note: line ~1305 in Matlab implementation.
+    """
+    Predictive padding function. Uses DFT and weighted least squares to find the main
+    sinusoidal components present in the signal and uses them to predict the signal
+    for `NP` consecutive time-steps.
+
+    The number of sinusoids is determined using Bayesian (Schwarz) information criterion,
+    but it cannot exceed `MaxOrder`.
+
+    Parameters
+    ----------
+    sig : ndarray
+        The signal.
+    fs : float
+        Sampling frequency of the signal.
+    NP : int
+        Number of consecutive time-steps.
+    fint : Tuple[float, float]
+        The allowable frequency range for sinusoids: tones with frequencies outside the range
+        are not continued for prediction.
+    args : any
+        If supplied, the first argument will be `MaxOrder` and the second will be the
+        weighting, `w`, for the weighted least squares method.
+
+    Returns
+    -------
+    The padding for the signal.
+    """
     # The first element of 'fint' can be a nested array, so flatten it.
     while hasattr(fint[0], "__len__"):
         fint = [fint[0][0], fint[1]]
@@ -1686,7 +1743,7 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
     ) / 2  # Multiplier to easily use golden section search afterwards.
 
     # FT frequencies.
-    Nq = np.ceil(L / 2)
+    Nq = int(np.ceil(L / 2))
     ftfr = np.concatenate([np.arange(0, Nq), -np.flip(np.arange(1, L - Nq))]) * fs / L
 
     # Standard deviation of original signal.
@@ -1702,8 +1759,6 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
     while itn < MaxOrder:
         itn += 1
         aftsig = abs(fft(Y, axis=0))
-
-        Nq = int(Nq)
 
         imax = argmax(aftsig[1 : Nq - 1])
         imax += 1
@@ -1749,6 +1804,8 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
                 FM = FM * np.vstack((rw, rw, rw)).T
 
             nb = backslash(FM, Y)
+
+            s = FM @ nb
             nerr = np.std(Y - s)
 
             df *= rr
@@ -1765,21 +1822,20 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
         else:
             cf = [0, pf, nf]
             cerr = [0, perr, nerr]
-            cb = np.array([np.zeros((len(pb), 1)), pb, nb]).squeeze()
-            cf[1] = pf - df / rr / rr
-            FM = np.array(
-                [
-                    np.ones((L + 1,)),
-                    np.cos(2 * np.pi * cf[1] * t),
-                    np.sin(2 * np.pi * cf[1] * t),
-                ]
-            ).T
-            if not isempty(rw):
-                FM = FM * (rw.T * np.ones((1, 3)))
 
-            temp_res = np.linalg.lstsq(FM, Y.T, rcond=None)  # level3
-            cb[1] = temp_res[0].squeeze()
-            cerr[1] = np.std(Y.T - FM * cb[1])
+            cb = np.vstack([zeros(pb.size), pb, nb]).T
+            cf[0] = pf - df / rr ** 2
+
+            FM1 = np.ones((L, 1,), dtype=np.float64)
+            FM2 = np.cos(2 * np.pi * cf[0] * t.reshape(t.size, 1))
+            FM3 = np.sin(2 * np.pi * cf[0] * t.reshape(t.size, 1))
+            FM = hstack([FM1, FM2, FM3])
+
+            if not isempty(rw):
+                FM = FM.T * np.vstack((rw, rw, rw))
+
+            cb[:, 0] = backslash(FM.T, Y).squeeze()
+            cerr[0] = np.std(Y - FM.T @ cb[:, 0])
 
         while cf[1] - cf[0] > FTol and cf[2] - cf[1] > FTol:
             tf = cf[0] + cf[2] - cf[1]
@@ -1793,9 +1849,9 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
                 FM = FM * np.vstack((rw, rw, rw)).T
 
             tb = backslash(FM, Y)
-            terr = np.std(Y - FM * tb.T)
+            terr = np.std(Y - FM @ tb)
 
-            if terr < cerr[1] and tf < cf[1]:  # TODO: fix all indices?
+            if terr < cerr[1] and tf < cf[1]:
                 cf = [cf[0], tf, cf[1]]
                 cerr = [cerr[0], terr, cerr[1]]
                 cb = [cb[0], tb[:], cb[:2]]
@@ -1961,9 +2017,9 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
         if itn > 2 and cic > ic[itn - 2] > ic[itn - 3]:
             break
 
-    frq = frq[: itn + 2]
-    amp = amp[: itn + 2]
-    phi = phi[: itn + 2]
+    frq = frq[: itn + 1]
+    amp = amp[: itn + 1]
+    phi = phi[: itn + 1]
 
     NP = int(NP)
     fsig = zeros(NP)
@@ -1973,7 +2029,7 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
         if sig.shape[1] > sig.shape[0]:
             fsig = fsig.T
             nt = nt.T
-    except:
+    except IndexError:
         pass
 
     for k in range(len(frq)):
@@ -1982,17 +2038,23 @@ def fcast(sig, fs, NP, fint, *args):  # line1145
                 # Sometimes 'nt' is one longer than 'fsig'.
                 if len(nt) > len(fsig):
                     nt = nt[len(nt) - len(fsig)]
+
+                warnings.warn(f"'nt' is larger than 'fsig'.", WaveletWarning)
             except:
                 pass
 
             fsig += amp[k] * np.cos(twopi * frq[k] * nt + phi[k])
         else:
+            # TODO: 'amp' and 'frq' are inaccurate. 'phi' is extremely inaccurate.
             fsig += amp[k] * np.cos(twopi * frq[k] * (T - 1 / fs) + phi[k])
 
     return fsig
 
 
 def aminterp(X, Y, Z, XI, YI, method):
+    """
+    In the Matlab implementation, this function exists for plotting. We don't need it.
+    """
     ZI = np.zeros(np.size(Z, 1), len(XI)) * np.NaN
     xstep = np.mean(np.diff(XI))
     xind = 1 + np.floor((1 / 2) + (X - XI(1)) / xstep)
