@@ -1721,6 +1721,7 @@ def fcast(
 
     WTol = 10 ** -8  # tolerance for cutting weighting.
     Y = sig
+
     if not isempty(rw):
         Y = rw * Y
 
@@ -1758,7 +1759,7 @@ def fcast(
 
     while itn < MaxOrder:
         itn += 1
-        aftsig = abs(fft(Y, axis=0))
+        aftsig = abs(fft(Y, axis=0))  # TODO: Y is incorrect when itn == 4.
 
         imax = argmax(aftsig[1 : Nq - 1])
         imax += 1
@@ -1851,26 +1852,33 @@ def fcast(
             tb = backslash(FM, Y)
             terr = np.std(Y - FM @ tb)
 
+            if isinstance(cb, list):
+                cb = np.array(cb).T
+
             if terr < cerr[1] and tf < cf[1]:
                 cf = [cf[0], tf, cf[1]]
                 cerr = [cerr[0], terr, cerr[1]]
-                cb = [cb[0], tb[:], cb[:2]]
+                cb = [cb[:, 0], tb[:], cb[:, 2]]
             if terr < cerr[1] and tf > cf[1]:
                 cf = [cf[1], tf, cf[2]]
                 cerr = [cerr[1], terr, cerr[2]]
-                cb = [cb[1], tb[:], cb[:2]]
+                cb = [cb[:, 1], tb[:], cb[:, 2]]
             if terr > cerr[1] and tf < cf[1]:
                 cf = [tf, cf[1], cf[2]]
                 cerr = [terr, cerr[1], cerr[2]]
-                cb = [tb[:], cb[1], cb[2]]
+                cb = [tb[:], cb[:, 1], cb[:, 2]]
             if terr > cerr[1] and tf > cf[1]:
                 cf = [cf[0], cf[1], tf]
                 cerr = [cerr[0], cerr[1], terr]
-                cb = [cb[0], cb[1], tb[:]]
+                cb = [cb[:, 0], cb[:, 1], tb[:]]
 
         # Forward values.
         fcf = cf[1]
-        fcb = cb[1]
+        try:
+            fcb = cb[:, 1]  # TODO: cb is incorrect.
+        except:
+            fcb = np.array(cb).T[:, 1]
+
         fcerr = cerr[1]
 
         #
@@ -1887,12 +1895,12 @@ def fcast(
             FM = FM.T * np.vstack((rw, rw, rw)).T
 
         nb = backslash(FM, Y)
-
-        s = FM @ nb
-        nerr = np.std(Y - s)
+        nerr = np.std(Y - FM @ nb)
 
         df = FTol
         perr = np.inf
+
+        # Starting frequency step and 'previous error'.
         while nerr < perr:
             if abs(nf - FTol) < eps:
                 break
@@ -1912,9 +1920,9 @@ def fcast(
 
             nb = backslash(FM, Y.T)
             nerr = np.std(Y - FM @ nb)
-            df = df * rr
 
-        # TODO: fix repeating code
+            df *= rr
+
         # Use golden section search to find exact minimum
         if nerr < perr:
             cf = [nf, nf, nf]
@@ -1927,8 +1935,9 @@ def fcast(
         else:
             cf = [nf, pf, 0]
             cerr = [nerr, perr, 0]
-            cb = [nb, pb, np.zeros((len(pb), 1,))]
-            cf[2] = pf + df / rr / rr
+
+            cb = np.vstack([nb, pb, zeros(len(pb))]).T
+            cf[2] = pf + df / rr ** 2
 
             FM1 = np.ones((L, 1,), dtype=np.float64)
             FM2 = np.cos(2 * np.pi * cf[0] * t.reshape(t.size, 1))
@@ -1938,8 +1947,8 @@ def fcast(
             if not isempty(rw):
                 FM = FM * np.vstack((rw, rw, rw)).T
 
-            cb[2] = backslash(FM, Y)
-            cerr[2] = np.std(Y - FM @ cb[2])
+            cb[:, 2] = backslash(FM, Y)
+            cerr[2] = np.std(Y - FM @ cb[:, 2])
 
         while cf[1] - cf[0] > FTol and cf[2] - cf[1] > FTol:
             tf = cf[0] + cf[2] - cf[1]
@@ -1955,26 +1964,33 @@ def fcast(
             tb = backslash(FM, Y)
             terr = np.std(Y - FM @ tb)
 
-            if terr < cerr[1] and tf < cf[1]:  # TODO: fix all indices?
+            if isinstance(cb, list):
+                cb = np.array(cb).T
+
+            if terr < cerr[1] and tf < cf[1]:
                 cf = [cf[0], tf, cf[1]]
                 cerr = [cerr[0], terr, cerr[1]]
-                cb = [cb[0], tb[:], cb[1]]
+                cb = [cb[:, 0], tb[:], cb[:, 1]]
             if terr < cerr[1] and tf > cf[1]:
                 cf = [cf[1], tf, cf[2]]
                 cerr = [cerr[1], terr, cerr[2]]
-                cb = [cb[1], tb[:], cb[:2]]
+                cb = [cb[:, 1], tb[:], cb[:, 2]]
             if terr > cerr[1] and tf < cf[1]:
                 cf = [tf, cf[1], cf[2]]
                 cerr = [terr, cerr[1], cerr[2]]
-                cb = [tb[:], cb[1], cb[2]]
+                cb = [tb[:], cb[:, 1], cb[:, 2]]
             if terr > cerr[1] and tf > cf[1]:
                 cf = [cf[0], cf[1], tf]
                 cerr = [cerr[0], cerr[1], terr]
-                cb = [cb[0], cb[1], tb[:]]
+                cb = [cb[:, 0], cb[:, 1], tb[:]]
 
-        # Backward values
+        # Backward values.
         bcf = cf[1]
-        bcb = cb[1]
+        try:
+            bcb = cb[:, 1]
+        except:
+            bcb = np.array(cb).T[:, 1]
+
         bcerr = cerr[1]
 
         #
@@ -1982,7 +1998,7 @@ def fcast(
         #
         if fcerr < bcerr:
             cf = fcf
-            cb = fcb
+            cb = fcb  # TODO: 'fcb' is incorrect when itn==2
             cerr = fcerr
         else:
             cf = bcf
@@ -1992,18 +2008,18 @@ def fcast(
         frq[itn] = cf
         amp[itn] = np.sqrt(cb[1] ** 2 + cb[2] ** 2)
         phi[itn] = np.arctan2(-cb[2], cb[1])
-        amp[0] = amp[0] + cb[0]
+        amp[0] += cb[0]
         v[itn - 1] = cerr
 
-        FM1 = np.ones(L, dtype=np.float64)
-        FM2 = np.cos(2 * np.pi * cf * t)
-        FM3 = np.sin(2 * np.pi * cf * t)
-        FM = np.asarray([FM1, FM2, FM3], dtype=np.float64)
+        FM1 = np.ones((L, 1,), dtype=np.float64)
+        FM2 = np.cos(2 * np.pi * cf * t.reshape(t.size, 1))
+        FM3 = np.sin(2 * np.pi * cf * t.reshape(t.size, 1))
+        FM = hstack([FM1, FM2, FM3])
 
         if not isempty(rw):
-            FM = FM.T * np.vstack((rw, rw, rw)).T
+            FM = FM * np.vstack((rw, rw, rw)).T
 
-        Y = Y - FM @ cb
+        Y = Y - FM @ cb  # TODO: 'cb' is wrong when itn==2
 
         #
         # ============= Information criterion =============
@@ -2017,7 +2033,7 @@ def fcast(
         if itn > 2 and cic > ic[itn - 2] > ic[itn - 3]:
             break
 
-    frq = frq[: itn + 1]
+    frq = frq[: itn + 1]  # TODO: some elements are correct; some seem to be off-by-one.
     amp = amp[: itn + 1]
     phi = phi[: itn + 1]
 
