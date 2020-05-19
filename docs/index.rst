@@ -18,6 +18,7 @@ The following table displays the most important modules from PyMODAlib. To view 
    pymodalib.algorithms.signals
    pymodalib.algorithms.wavelet
    pymodalib.algorithms.windowed_fourier
+   pymodalib.plotting
 
 .. toctree::
    :maxdepth: 2

@@ -13,6 +13,9 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
+"""
+Functions for plotting the results of PyMODAlib algorithms.
+"""
 import warnings
 
 import numpy as np
@@ -32,9 +35,12 @@ def contourf(
     **kwargs
 ) -> "matplotlib.contour.QuadContourSet":
     """
-    Plots a contour plot in PyMODA style. Useful for easily plotting a wavelet transform, etc.
+    Plots a contour plot in PyMODA style. Useful for easily plotting a wavelet transform.
 
-    This function is a Wrapper around matplotlib's 'contourf'.
+    This function is a wrapper around matplotlib's 'contourf'.
+
+    .. note::
+        Most of this documentation was copied from the relevant matplotlib function, `matplotlib.pyplot.contourf`.
 
     Parameters
     ----------
@@ -54,14 +60,21 @@ def contourf(
         If an int n, use n data intervals; i.e. draw n+1 contour lines. The level heights are automatically chosen.
 
         If array-like, draw contour lines at the specified levels. The values must be in increasing order.
+    vmin : float, None
+        The minimum value, used to calibrate the colormap. If None, the minimum value of the array will be used.
+    vmax : float, None
+        The maximum value, used to calibrate the colormap. If None, the maximum value of the array will be used.
+    cmap : str, Colormap, None
+        The colormap to use. If left to None, the PyMODAlib colormap will be used.
+    *args : optional
+        Arguments to pass to matplotlib's `contourf` function.
+    *kwargs : optional
+        Keyword arguments to pass to matplotlib's `contourf` function.
 
     Returns
     -------
     matplotlib.contour.QuadContourSet
         The value returned by matplotlib's `contourf`.
-
-    .. note::
-        Documentation copied from the relevant matplotlib function, `matplotlib.pyplot.contourf`.
     """
     if vmin is None:
         vmin = np.nanmin(z)
