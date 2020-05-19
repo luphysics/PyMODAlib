@@ -2033,13 +2033,16 @@ def fcast(
         if itn > 2 and cic > ic[itn - 2] > ic[itn - 3]:
             break
 
-    frq = frq[: itn + 1]  # TODO: some elements are correct; some seem to be off-by-one.
+    frq = frq[: itn + 1]  # TODO: 'frq' has now been fixed.
     amp = amp[: itn + 1]
     phi = phi[: itn + 1]
 
     NP = int(NP)
     fsig = zeros(NP)
     nt = np.arange(T, T + NP / fs, 1 / fs)
+
+    if len(nt) > len(fsig):
+        nt = nt[:-1]
 
     try:
         if sig.shape[1] > sig.shape[0]:
@@ -2050,18 +2053,9 @@ def fcast(
 
     for k in range(len(frq)):
         if fint[0] < frq[k] < fint[1]:
-            try:
-                # Sometimes 'nt' is one longer than 'fsig'.
-                if len(nt) > len(fsig):
-                    nt = nt[len(nt) - len(fsig)]
-
-                warnings.warn(f"'nt' is larger than 'fsig'.", WaveletWarning)
-            except:
-                pass
-
             fsig += amp[k] * np.cos(twopi * frq[k] * nt + phi[k])
         else:
-            # TODO: 'amp' and 'frq' are inaccurate. 'phi' is extremely inaccurate.
+            # TODO: This is now accurate.
             fsig += amp[k] * np.cos(twopi * frq[k] * (T - 1 / fs) + phi[k])
 
     return fsig
