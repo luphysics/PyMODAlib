@@ -22,7 +22,7 @@ from pymodalib.algorithms.signals import preprocess, generate_times
 from pymodalib.algorithms.signals import resampl_flow as downsample
 from pymodalib.algorithms.wavelet import wavelet_transform
 from pymodalib.algorithms.windowed_fourier import windowed_fourier_transform
-from pymodalib.utils.plotting import colormap, contourf
+from pymodalib.plotting import colormap, contourf
 from pymodalib.utils.cache import cachedarray, cleanup
 
 # PyMODAlib version.
