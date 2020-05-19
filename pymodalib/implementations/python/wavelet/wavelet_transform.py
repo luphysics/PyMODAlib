@@ -310,7 +310,6 @@ def wavelet_transform(
         pow = (-(L / fs - np.arange(1, L + 1) / fs)) / (wp.t2h - wp.t1h)
         w = 2 ** pow
 
-        # TODO: this is inaccurate.
         padleft = fcast(
             np.flip(signal),
             fs,
@@ -321,7 +320,6 @@ def wavelet_transform(
         )
         padleft = np.flip(padleft)
 
-        # TODO: this is inaccurate.
         padright = fcast(
             signal,
             fs,
@@ -343,7 +341,6 @@ def wavelet_transform(
         n1 = 0
         n2 = 0
 
-    # TODO: This is inaccurate because 'padleft' and 'padright' are inaccurate.
     signal = np.concatenate([padleft, signal, padright])
     if preprocess and dflag == 1:
         signal = preprocess(signal, fs, fmin, fmax)
@@ -353,9 +350,7 @@ def wavelet_transform(
     ff = np.concatenate([np.arange(0, Nq), -arange(1, NL - Nq)[::-1]]) * fs / NL
 
     NL = int(NL)
-    fx = np.fft.fft(
-        signal, NL, axis=0
-    )  # TODO: This is inaccurate because the signal is inaccurate.
+    fx = np.fft.fft(signal, NL, axis=0)
     if preprocess:
         try:
             indices = ((ff <= np.max([fmin, fs / L])) | (ff >= fmax)).nonzero()[1]
@@ -419,7 +414,7 @@ def wavelet_transform(
         cc = zeros(int(NL), dtype=np.complex64)
 
         # Convolution in the frequency domain.
-        cc[ii] = fx[ii] * fw[:]  # TODO: 'fx' is inaccurate. 'fw' is fine.
+        cc[ii] = fx[ii] * fw[:]
 
         # Calculate WT at each time.
         out = (wp.ompeak / (twopi * freq[sn])) ** (1 - p) * np.fft.ifft(cc, NL, axis=0)
@@ -1759,7 +1754,7 @@ def fcast(
 
     while itn < MaxOrder:
         itn += 1
-        aftsig = abs(fft(Y, axis=0))  # TODO: Y is incorrect when itn == 4.
+        aftsig = abs(fft(Y, axis=0))
 
         imax = argmax(aftsig[1 : Nq - 1])
         imax += 1
@@ -1875,7 +1870,7 @@ def fcast(
         # Forward values.
         fcf = cf[1]
         try:
-            fcb = cb[:, 1]  # TODO: cb is incorrect.
+            fcb = cb[:, 1]
         except:
             fcb = np.array(cb).T[:, 1]
 
@@ -1998,7 +1993,7 @@ def fcast(
         #
         if fcerr < bcerr:
             cf = fcf
-            cb = fcb  # TODO: 'fcb' is incorrect when itn==2
+            cb = fcb
             cerr = fcerr
         else:
             cf = bcf
@@ -2019,7 +2014,7 @@ def fcast(
         if not isempty(rw):
             FM = FM * np.vstack((rw, rw, rw)).T
 
-        Y = Y - FM @ cb  # TODO: 'cb' is wrong when itn==2
+        Y = Y - FM @ cb
 
         #
         # ============= Information criterion =============
@@ -2033,7 +2028,7 @@ def fcast(
         if itn > 2 and cic > ic[itn - 2] > ic[itn - 3]:
             break
 
-    frq = frq[: itn + 1]  # TODO: 'frq' has now been fixed.
+    frq = frq[: itn + 1]
     amp = amp[: itn + 1]
     phi = phi[: itn + 1]
 
@@ -2055,7 +2050,6 @@ def fcast(
         if fint[0] < frq[k] < fint[1]:
             fsig += amp[k] * np.cos(twopi * frq[k] * nt + phi[k])
         else:
-            # TODO: This is now accurate.
             fsig += amp[k] * np.cos(twopi * frq[k] * (T - 1 / fs) + phi[k])
 
     return fsig
@@ -2063,12 +2057,14 @@ def fcast(
 
 def aminterp(X, Y, Z, XI, YI, method):
     """
-    In the Matlab implementation, this function exists for plotting. We don't need it.
+    In the Matlab implementation, this function exists for plotting.
+
+    Note: This function is incomplete.
     """
     ZI = np.zeros(np.size(Z, 1), len(XI)) * np.NaN
     xstep = np.mean(np.diff(XI))
     xind = 1 + np.floor((1 / 2) + (X - XI(1)) / xstep)
-    xpnt = np.asarray([[0], [0], [0]])  # TODO: add later?
+    xpnt = np.asarray([[0], [0], [0]])
 
     if method == "max":
         for xn in range(1, len(xpnt)):
@@ -2085,7 +2081,7 @@ def aminterp(X, Y, Z, XI, YI, method):
     ZI = np.zeros(len(YI), np.size(Z, 2)) * np.NaN
     ystep = np.mean(np.diff(YI))
     yind = 1 + np.floor((1 / 2) + (Y - YI(1)) / ystep)
-    ypnt = [[0], [0], [0]]  # TODO: add later?
+    ypnt = [[0], [0], [0]]
 
     if method == "max":
         for yn in range(1, len(ypnt)):
