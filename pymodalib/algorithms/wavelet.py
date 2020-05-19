@@ -38,6 +38,7 @@ def wavelet_transform(
     implementation="python",
     padding: str = "predictive",
     return_opt: bool = False,
+    parallel: bool = None,
     *args,
     **kwargs,
 ) -> Tuple[ndarray, ndarray]:
@@ -93,10 +94,12 @@ def wavelet_transform(
     implementation : {"matlab", "python"}, optional
         (Default value = "python") Whether to use the MATLAB implementation, or the Python implementation.
         The MATLAB implementation requires the MATLAB Runtime.
-    return_opt: bool
+    return_opt : bool
          (Default value = False) Whether to return a dictionary containing the parameters used with the wavelet
          transform. This can be useful if `fmin` was left to its default value, since it will contain the value
          of `fmin` which was used.
+    parallel : bool, None
+        Whether to parallelize the algorithm.
     *args : Any, optional
         Any other arguments to pass to the wavelet transform implementation.
     **kwargs : Any, optional
@@ -154,6 +157,7 @@ def wavelet_transform(
             padding=padding,
             rel_tolerance=rel_tolerance,
             return_opt=return_opt,
+            parallel=parallel,
             *args,
             **kwargs,
         )

@@ -23,11 +23,11 @@ import scipy.integrate
 import scipy.optimize
 import scipy.special as spec
 from numpy import ndarray
-from pymodalib.utils import reorient
 from scipy.sparse.linalg.isolve.lsqr import eps
 
 import pymodalib
 from pymodalib.implementations.python.matlab_compat import *
+from pymodalib.utils import reorient
 
 fwtmax = "fwtmax"
 twfmax = "twfmax"
@@ -230,17 +230,20 @@ def wavelet_transform(
     disp_mode: bool = False,
     cut_edges: bool = False,
     nv: int = None,
+    parallel: bool = None,
     return_opt: bool = False,
     *args,
     **kwargs,
 ):
-    signal = pymodalib.utils.reorient(signal)
+    if parallel is None:
+        parallel = False
 
-    p = 1  # WT normalisation.
+    signal = pymodalib.utils.reorient(signal)
 
     fmax = fmax or fs / 2
     L = len(signal)
 
+    p = 1  # WT normalisation.
     if fs <= 0 or not fs:
         raise ValueError("Sampling frequency must be a positive finite number")
 
@@ -358,15 +361,102 @@ def wavelet_transform(
         except IndexError:
             pass
 
-    WT = np.empty((SN, L), dtype=np.complex64)
-    WT.fill(np.NaN)
     ouflag = 0
 
     if (wp.t2e - wp.t1e) * wp.ompeak / (2 * np.pi * fmax) > L / fs:
         coib1.fill(0)
         coib2.fill(0)
 
-    for sn in range(0, SN):
+    if not parallel:
+        WT = _calc_wt_rows(0, SN, ff, wp, freq, fwt, twf, fx, fs, L, NL, p, n1, n2)
+    else:
+        import multiprocessing as mp
+
+        pool = mp.Pool()
+        num_processes = mp.cpu_count()
+
+        args = []
+
+        indices = np.array_split(np.arange(0, SN), num_processes)
+        ranges = [(i[0], i[-1] + 1,) for i in indices]
+
+        for start, end in ranges:
+            _args = (start, end, ff, wp, freq, fwt, twf, fx, fs, L, NL, p, n1, n2)
+            args.append(_args)
+
+        results = pool.starmap(_calc_wt_rows, args)
+
+        WT = np.empty((SN, L), dtype=np.complex64)
+        WT.fill(np.NaN)
+
+        for (start, end), result in zip(ranges, results):
+            WT[start:end, :] = result[:, :]
+
+    if cut_edges:
+        icoib = nonzero((L - coib1 - coib2) <= 0)[0]
+        WT[icoib, :] = np.nan
+
+        ovL = int(np.ceil(np.sum(coib1 + coib2) - L * len(icoib)))
+        frn = np.empty((ovL,))
+        frn.fill(np.NaN)
+
+        ttn = np.empty((ovL,))
+        ttn.fill(np.NaN)
+
+        qn = 0
+        for fn in range(SN):
+            cL = int(coib1[fn] + coib2[fn])
+
+            if 0 < cL < L:
+                frn[qn : qn + cL] = fn
+                ttn[qn : qn + cL] = concat(
+                    [np.arange(int(coib1[fn])), np.arange(L - int(coib2[fn]), L)]
+                ).T
+                qn = qn + cL
+
+        frn = frn[:qn]
+        ttn = ttn[:qn]
+
+        WT.ravel()[
+            np.ravel_multi_index(
+                [frn.astype(np.int), ttn.astype(np.int)], dims=WT.shape
+            )
+        ] = np.NaN
+
+    if return_opt:
+        if isinstance(fmin, ndarray):
+            try:
+                fmin = fmin[0, 0]
+                nv = nv[0]
+            except:
+                pass
+
+        opt = {
+            "fmin": fmin,
+            "fmax": fmax,
+            "f0": wp.f0,
+            "preprocess": preprocess,
+            "nv": nv,
+            "cut_edges": cut_edges,
+            "fs": fs,
+            "padding": padding,
+            "rel_tolerance": rel_tolerance,
+        }
+        return WT, freq, opt
+
+    return WT, freq
+
+
+def _calc_wt_rows(
+    start: int, end: int, ff, wp, freq, fwt, twf, fx, fs, L, NL, p, n1, n2
+) -> ndarray:
+    """
+    Calculates a row of the WT.
+    """
+    WT = np.empty((end - start, L), dtype=np.complex64)
+    WT.fill(np.NaN)
+
+    for sn in range(start, end):
         # Frequencies for the wavelet function.
         freqwf = ff * wp.ompeak / (twopi * freq[sn])
 
@@ -423,61 +513,9 @@ def wavelet_transform(
         n2 = int(n2)
         NL = int(NL)
 
-        WT[sn, arange(0, L)] = out[n1 : NL - n2]
+        WT[sn - start, arange(0, L)] = out[n1 : NL - n2]
 
-    if cut_edges:
-        icoib = nonzero((L - coib1 - coib2) <= 0)[0]
-        WT[icoib, :] = np.nan
-
-        ovL = int(np.ceil(np.sum(coib1 + coib2) - L * len(icoib)))
-        frn = np.empty((ovL,))
-        frn.fill(np.NaN)
-
-        ttn = np.empty((ovL,))
-        ttn.fill(np.NaN)
-
-        qn = 0
-        for fn in range(SN):
-            cL = int(coib1[fn] + coib2[fn])
-
-            if 0 < cL < L:
-                frn[qn : qn + cL] = fn
-                ttn[qn : qn + cL] = concat(
-                    [np.arange(int(coib1[fn])), np.arange(L - int(coib2[fn]), L)]
-                ).T
-                qn = qn + cL
-
-        frn = frn[:qn]
-        ttn = ttn[:qn]
-
-        WT.ravel()[
-            np.ravel_multi_index(
-                [frn.astype(np.int), ttn.astype(np.int)], dims=WT.shape
-            )
-        ] = np.NaN
-
-    if return_opt:
-        if isinstance(fmin, ndarray):
-            try:
-                fmin = fmin[0, 0]
-                nv = nv[0]
-            except:
-                pass
-
-        opt = {
-            "fmin": fmin,
-            "fmax": fmax,
-            "f0": wp.f0,
-            "preprocess": preprocess,
-            "nv": nv,
-            "cut_edges": cut_edges,
-            "fs": fs,
-            "padding": padding,
-            "rel_tolerance": rel_tolerance,
-        }
-        return WT, freq, opt
-
-    return WT, freq
+    return WT
 
 
 def parcalc(racc, L, wp, fwt, twf, disp_mode, f0, fmax, wavelet="Lognorm", fs=-1):
