@@ -35,7 +35,7 @@ def wavelet_transform(
     wavelet: str = "Lognorm",
     preprocess: bool = True,
     rel_tolerance: float = 0.01,
-    implementation="matlab",
+    implementation="python",
     padding: str = "predictive",
     return_opt: bool = False,
     *args,
@@ -91,10 +91,8 @@ def wavelet_transform(
         to pad the signal with,so that the relative constribution of effects of implicit periodic signal continutation
         due to convolution in the frequency domain is smaller. See [1] for details.
     implementation : {"matlab", "python"}, optional
-        (Default value = "matlab") Whether to use the MATLAB implementation, or the Python implementation.
+        (Default value = "python") Whether to use the MATLAB implementation, or the Python implementation.
         The MATLAB implementation requires the MATLAB Runtime.
-        *Note: When the Python implementation is considered fully stable, the default value of this
-        parameter will be changed.*
     return_opt: bool
          (Default value = False) Whether to return a dictionary containing the parameters used with the wavelet
          transform. This can be useful if `fmin` was left to its default value, since it will contain the value
