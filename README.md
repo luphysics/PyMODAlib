@@ -61,7 +61,7 @@ pip install -U pymodalib
 | --- | --- | --- | --- |
 | Wavelet transform | :heavy_check_mark: | No | | 
 | Wavelet phase coherence | :heavy_check_mark: | No | | 
-| Group coherence | :heavy_check_mark: | No | Uses MATLAB Runtime unless `implementation="python"` is passed as a parameter | 
+| Group coherence | :heavy_check_mark: | No | | 
 | Detecting harmonics | :heavy_check_mark: | No | |
 | Downsampling | :heavy_check_mark: | No | | 
 
