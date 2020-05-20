@@ -16,8 +16,9 @@
 """
 Python implementation of the wavelet transform function.
 """
+import sys
 import warnings
-from typing import Union
+from typing import Union, Tuple
 
 import scipy.integrate
 import scipy.optimize
@@ -313,24 +314,40 @@ def wavelet_transform(
         pow = (-(L / fs - np.arange(1, L + 1) / fs)) / (wp.t2h - wp.t1h)
         w = 2 ** pow
 
-        padleft = fcast(
-            np.flip(signal),
-            fs,
-            n1,
-            [max([fmin, fs / L]), fmax],
-            min([np.ceil(SN / 2) + 5, np.round(L / 3)]),
-            w,
-        )
-        padleft = np.flip(padleft)
+        # Define arguments to pass to 'fcast'.
+        args = [
+            # Args for 'padleft'.
+            (
+                np.flip(signal),
+                fs,
+                n1,
+                [max([fmin, fs / L]), fmax],
+                min([np.ceil(SN / 2) + 5, np.round(L / 3)]),
+                w,
+            ),
+            # Args for 'padright'.
+            (
+                signal,
+                fs,
+                n2,
+                [max([fmin, fs / L]), fmax],
+                min([np.ceil(SN / 2) + 5, np.round(L / 3)]),
+                w,
+            ),
+        ]
 
-        padright = fcast(
-            signal,
-            fs,
-            n2,
-            [max([fmin, fs / L]), fmax],
-            min([np.ceil(SN / 2) + 5, np.round(L / 3)]),
-            w,
-        )
+        if parallel and sys.version_info > (3, 8,):
+            import multiprocessing as mp
+
+            pool = mp.Pool()
+
+            # Calculate 'padleft' and 'padright' in parallel using Pool.
+            padleft, padright = pool.starmap(fcast, args)
+        else:
+            padleft = fcast(*args[0])
+            padright = fcast(*args[1])
+
+        padleft = np.flip(padleft)
 
         # Detrend one more time.
         dflag = 1
@@ -367,30 +384,71 @@ def wavelet_transform(
         coib1.fill(0)
         coib2.fill(0)
 
-    if not parallel:
-        WT = _calc_wt_rows(0, SN, ff, wp, freq, fwt, twf, fx, fs, L, NL, p, n1, n2)
-    else:
+    WT = np.empty((SN, L), dtype=np.complex64)
+
+    if parallel and sys.version_info >= (3, 8,):
         import multiprocessing as mp
+        from multiprocessing.shared_memory import SharedMemory
 
         pool = mp.Pool()
         num_processes = mp.cpu_count()
 
+        # Allocate shared memory.
+        smm = SharedMemory(create=True, size=WT.nbytes)
+        sm_WT = np.ndarray(WT.shape, dtype=WT.dtype, buffer=smm.buf)
+        sm_WT.fill(np.NaN)
+
+        del WT
         args = []
 
+        # Choose the range of indices which each process will calculate.
         indices = np.array_split(np.arange(0, SN), num_processes)
         ranges = [(i[0], i[-1] + 1,) for i in indices]
 
+        # Define arguments to pass to processes.
         for start, end in ranges:
-            _args = (start, end, ff, wp, freq, fwt, twf, fx, fs, L, NL, p, n1, n2)
+            _args = (
+                smm.name,
+                sm_WT.shape,
+                start,
+                end,
+                ff,
+                wp,
+                freq,
+                fwt,
+                twf,
+                fx,
+                fs,
+                L,
+                NL,
+                p,
+                n1,
+                n2,
+            )
             args.append(_args)
 
-        results = pool.starmap(_calc_wt_rows, args)
+        # Calculate rows of WT in parallel.
+        pool.starmap(_calc_wt_rows, args)
 
-        WT = np.empty((SN, L), dtype=np.complex64)
+        # Reallocate the data from shared memory.
+        WT = np.empty(sm_WT.shape, dtype=sm_WT.dtype)
+        WT[:, :] = sm_WT[:, :]
+
+        # Cleanup shared memory.
+        del sm_WT
+        smm.close()
+        smm.unlink()
+    else:
+        if parallel:
+            warnings.warn(
+                f"'Parallel' is enabled but the Python version is '{'.'.join(sys.version_info[:2])}'. The minimum required version is Python 3.8.",
+                RuntimeWarning,
+            )
+
         WT.fill(np.NaN)
-
-        for (start, end), result in zip(ranges, results):
-            WT[start:end, :] = result[:, :]
+        _calc_wt_rows(
+            WT, WT.shape, 0, SN, ff, wp, freq, fwt, twf, fx, fs, L, NL, p, n1, n2
+        )
 
     if cut_edges:
         icoib = nonzero((L - coib1 - coib2) <= 0)[0]
@@ -448,13 +506,32 @@ def wavelet_transform(
 
 
 def _calc_wt_rows(
-    start: int, end: int, ff, wp, freq, fwt, twf, fx, fs, L, NL, p, n1, n2
+    WT: Union[ndarray, str],
+    shape: Tuple[int, int],
+    start: int,
+    end: int,
+    ff,
+    wp,
+    freq,
+    fwt,
+    twf,
+    fx,
+    fs,
+    L,
+    NL,
+    p,
+    n1,
+    n2,
 ) -> ndarray:
     """
-    Calculates a row of the WT.
+    Calculates rows in the WT.
     """
-    WT = np.empty((end - start, L), dtype=np.complex64)
-    WT.fill(np.NaN)
+    smm = None
+    if isinstance(WT, str):
+        from multiprocessing.shared_memory import SharedMemory
+
+        smm = SharedMemory(name=WT)
+        WT = np.ndarray(shape, dtype=np.complex64, buffer=smm.buf)
 
     for sn in range(start, end):
         # Frequencies for the wavelet function.
@@ -513,9 +590,12 @@ def _calc_wt_rows(
         n2 = int(n2)
         NL = int(NL)
 
-        WT[sn - start, arange(0, L)] = out[n1 : NL - n2]
+        WT[sn, arange(0, L)] = out[n1 : NL - n2]
 
-    return WT
+    # Cleanup shared memory.
+    if smm:
+        del WT
+        smm.close()
 
 
 def parcalc(racc, L, wp, fwt, twf, disp_mode, f0, fmax, wavelet="Lognorm", fs=-1):

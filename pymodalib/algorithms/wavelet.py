@@ -99,7 +99,8 @@ def wavelet_transform(
          transform. This can be useful if `fmin` was left to its default value, since it will contain the value
          of `fmin` which was used.
     parallel : bool, None
-        Whether to parallelize the algorithm.
+        Whether to parallelize the algorithm. This may improve performance by up to 25% for larger signals,
+        but it also increases memory usage.
     *args : Any, optional
         Any other arguments to pass to the wavelet transform implementation.
     **kwargs : Any, optional
