@@ -21,6 +21,7 @@ Wavelet transform.
 from typing import Tuple
 
 from numpy import ndarray
+from pymodalib.implementations.python.wavelet.wavelet_transform import MorseWavelet
 
 from pymodalib.utils.parameters import verify_parameter, BadParametersException
 
@@ -128,7 +129,7 @@ def wavelet_transform(
        Part II: Resolution, reconstruction and concentration."
        {preprint:arXiv:1310.7274}
     """
-    verify_parameter(wavelet, possible_values=["Lognorm", "Bump", "Morlet"])
+    verify_parameter(wavelet, possible_values=["Lognorm", "Bump", "Morlet", "Morse-a"])
     verify_parameter(implementation, possible_values=["matlab", "python"])
 
     if implementation == "python":
@@ -143,7 +144,10 @@ def wavelet_transform(
         elif wavelet == "Morlet":
             wp = MorletWavelet(resolution)
         elif wavelet == "Bump":
-            raise NotImplementedError("Bump wavelet is not implemented yet.")
+            # wp = BumpWavelet(resolution)
+            pass
+        elif wavelet == "Morse":
+            wp = MorseWavelet(3, resolution)
         else:
             raise ValueError(f"Unknown wavelet: '{wavelet}'")
 
