@@ -31,8 +31,10 @@ def contourf(
     vmin=None,
     vmax=None,
     cmap=None,
+    subsample: bool = True,
+    subsample_width: int = 3840,
     *args,
-    **kwargs
+    **kwargs,
 ) -> "matplotlib.contour.QuadContourSet":
     """
     Plots a contour plot in PyMODA style. Useful for easily plotting a wavelet transform.
@@ -66,6 +68,11 @@ def contourf(
         The maximum value, used to calibrate the colormap. If None, the maximum value of the array will be used.
     cmap : str, Colormap, None
         The colormap to use. If left to None, the PyMODAlib colormap will be used.
+    subsample : bool
+        (Default = True) Whether to subsample the data, greatly improving plotting performance.
+    subsample_width : int
+        (Default = 3840) The target width of the subsampled data. If this width is more than the width of the
+        screen in pixels, the effect of subsampling will be negligible.
     *args : optional
         Arguments to pass to matplotlib's `contourf` function.
     *kwargs : optional
@@ -83,9 +90,39 @@ def contourf(
     if cmap is None:
         cmap = colormap()
 
+    try:
+        if subsample:
+            x = _subsample2d(x, subsample_width)
+            y = _subsample2d(y, subsample_width)
+            z = _subsample2d(z, subsample_width)
+    except:
+        warnings.warn(
+            f"Could not subsample when x, y, z have dimensions {x.shape}, {y.shape}, {z.shape}. "
+            f"Please use 'np.meshgrid' to ensure that the shapes are identical.",
+            RuntimeWarning,
+        )
+
     return axes.contourf(
         x, y, z, levels, vmin=vmin, vmax=vmax, cmap=cmap, *args, **kwargs
     )
+
+
+def _subsample2d(arr: ndarray, width: int) -> ndarray:
+    try:
+        x, y = arr.shape
+    except ValueError:
+        return arr
+
+    if width > arr.shape[1]:
+        return arr
+
+    factor = int(np.ceil((y / width)))
+    new_shape = (x, int(np.ceil(y / factor)))
+
+    result = np.empty(new_shape, dtype=arr.dtype)
+    result[:, :] = arr[:, ::factor]
+
+    return result
 
 
 def colormap() -> "LinearSegmentedColormap":
