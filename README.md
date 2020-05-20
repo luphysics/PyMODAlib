@@ -59,19 +59,17 @@ pip install -U pymodalib
 
 | Feature | Implemented | Requires MATLAB Runtime | Notes |
 | --- | --- | --- | --- |
-| Wavelet transform | :heavy_check_mark: | No | Uses MATLAB Runtime unless `implementation="python"` is passed as a parameter | 
+| Wavelet transform | :heavy_check_mark: | No | | 
 | Wavelet phase coherence | :heavy_check_mark: | No | | 
 | Group coherence | :heavy_check_mark: | No | Uses MATLAB Runtime unless `implementation="python"` is passed as a parameter | 
 | Detecting harmonics | :heavy_check_mark: | No | |
 | Downsampling | :heavy_check_mark: | No | | 
 
-> :warning: The pure-Python implementation of the wavelet transform (used only when the `implementation="python"` parameter is supplied) may not be fully stable. Some function signatures may change before `v1.0.0`.
-
 ### Getting started
 
-#### Examples
+### Examples
 
-There are examples of using PyMODAlib's functionality in the [examples](https://github.com/luphysics/PyMODAlib/tree/master/examples) directory. There should be an example for each function, which also demonstrates how to plot the results.
+There are downloadable examples of using PyMODAlib's functionality in the [examples](https://github.com/luphysics/PyMODAlib/tree/master/examples) directory. There should be an example for each function, which also demonstrates how to plot the results.
 
 To download the dependencies required to run the examples, open a terminal and run:
 
@@ -82,6 +80,52 @@ pip install -U pymodalib matplotlib
 > **Tip:** If this causes problems, try the solutions outlined in the [Installing PyMODAlib](#installing-pymodalib) section.
 
 To try the examples, download the PyMODAlib repository [as a zip file](https://github.com/luphysics/PyMODAlib/zipball/master) or by using `git clone`, then run relevant Python files from the `examples` subfolders.
+
+#### Wavelet transform 
+
+This snippet demonstrates how to calculate and plot the wavelet transform of a signal. You can download the data file using [this link](https://github.com/luphysics/PyMODAlib/raw/master/examples/1signal_10Hz.npy).
+
+> **Note:** You can load data from `.mat` files using `scipy.io.loadmat`.
+
+```python
+import pymodalib
+import numpy as np
+from matplotlib import pyplot as plt
+
+# Load the signal from a data file.
+signal = np.load("1signal_10Hz.npy")
+
+# Sampling frequency is 10Hz.
+fs = 10
+
+# Generate the time values for the signal.
+times = pymodalib.generate_times(signal, fs)
+
+# Calculate the wavelet transform.
+wt, freq = pymodalib.wavelet_transform(signal, fs)
+
+# Calculate the amplitude of the wavelet transform.
+amp_wt = np.abs(wt)
+
+# Get Axes object from matplotlib.
+ax = plt.gca()
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Frequency (Hz)")
+ax.set_title("Amplitude of wavelet transform")
+
+# Create the 'x' and 'y' values for plotting.
+mesh1, mesh2 = np.meshgrid(times, freq)
+
+# Plot the wavelet transform using PyMODAlib's colormap.
+pymodalib.contourf(ax, mesh1, mesh2, amp_wt, log=True)
+
+# Show the plot.
+plt.show()
+```
+
+This snippet will produce the following plot:
+
+![Screenshot of the wavelet transform produced by the code snippet.](/docs/images/wt_snippet.png)
 
 ### PyMODAlib cache
 
