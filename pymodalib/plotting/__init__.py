@@ -33,6 +33,7 @@ def contourf(
     cmap=None,
     subsample: bool = True,
     subsample_width: int = 3840,
+    log=False,
     *args,
     **kwargs,
 ) -> "matplotlib.contour.QuadContourSet":
@@ -73,6 +74,9 @@ def contourf(
     subsample_width : int
         (Default = 3840) The target width of the subsampled data. If this width is more than the width of the
         screen in pixels, the effect of subsampling will be negligible.
+    log : bool
+        (Default = False) Whether to use a logarithmic scale on the y-axis.
+        This is useful when plotting a wavelet transform.
     *args : optional
         Arguments to pass to matplotlib's `contourf` function.
     *kwargs : optional
@@ -89,6 +93,9 @@ def contourf(
         vmax = np.nanmax(z)
     if cmap is None:
         cmap = colormap()
+
+    if log:
+        axes.set_yscale("log")
 
     try:
         if subsample:
