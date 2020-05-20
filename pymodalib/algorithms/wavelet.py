@@ -21,6 +21,7 @@ Wavelet transform.
 from typing import Tuple
 
 from numpy import ndarray
+from pymodalib.implementations.python.wavelet.wavelet_transform import MorseWavelet
 
 from pymodalib.utils.parameters import verify_parameter, BadParametersException
 
@@ -71,7 +72,7 @@ def wavelet_transform(
         (Default = False) Whether WT coefficients should be set to NaN out of the influence (see [1]).
         Use `cut_edges=True` if you wish to analyze the WT only within the cone of influence, which is recommended
         if you are estimating only the time-averaged quantities.
-    wavelet : {"Lognorm", "Morlet", "Bump", "Morse-a"}
+    wavelet : {"Lognorm", "Morlet", "Morse-a"}
         (Default = "Lognorm") Wavelet used in the WT calculation.
         For a list of all supported names and their properties, see Appendix E in [1].
         *Note: supplying a wavelet using a custom function is not supported in PyMODAlib.*
@@ -128,7 +129,7 @@ def wavelet_transform(
        Part II: Resolution, reconstruction and concentration."
        {preprint:arXiv:1310.7274}
     """
-    verify_parameter(wavelet, possible_values=["Lognorm", "Bump", "Morlet"])
+    verify_parameter(wavelet, possible_values=["Lognorm", "Bump", "Morlet", "Morse-a"])
     verify_parameter(implementation, possible_values=["matlab", "python"])
 
     if implementation == "python":
@@ -143,7 +144,9 @@ def wavelet_transform(
         elif wavelet == "Morlet":
             wp = MorletWavelet(resolution)
         elif wavelet == "Bump":
-            raise NotImplementedError("Bump wavelet is not implemented yet.")
+            raise Exception("Bump wavelet is not supported yet.")
+        elif wavelet == "Morse-a":
+            wp = MorseWavelet(3, resolution)
         else:
             raise ValueError(f"Unknown wavelet: '{wavelet}'")
 

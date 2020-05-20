@@ -363,7 +363,7 @@ def wavelet_transform(
 
     signal = np.concatenate([padleft, signal, padright])
     if preprocess and dflag == 1:
-        signal = preprocess(signal, fs, fmin, fmax)
+        signal = pymodalib.preprocess(signal, fs, fmin, fmax)
 
     Nq = int(np.ceil((NL + 1) / 2))
 
