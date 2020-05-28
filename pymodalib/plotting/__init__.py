@@ -45,6 +45,47 @@ def contourf(
     .. note::
         Most of this documentation was copied from the relevant matplotlib function, `matplotlib.pyplot.contourf`.
 
+    .. highlight:: python
+    .. code-block:: python
+
+        \"""
+        Example of plotting the wavelet transform of a signal using this function.
+        \"""
+        import numpy as np
+        from matplotlib import pyplot as plt
+        import pymodalib
+
+        # Load the signal from a data file.
+        signal = np.load("some_data_file.npy")
+
+        # Sampling frequency of 10Hz.
+        fs = 10
+
+        # Time values for the signal.
+        times = pymodalib.generate_times(signal, fs)
+
+        # Calculate the wavelet transform.
+        wt, freq = pymodalib.wavelet_transform(signal, fs)
+
+        # Amplitude of the wavelet transform.
+        amp = np.abs(wt)
+
+        # Create the Axes object.
+        fig, ax = plt.subplots()
+
+        # Plot the wavelet transform.
+        mesh1, mesh2 = np.meshgrid(times, freq)
+        pymodalib.contourf(ax, mesh1, mesh2, amp)
+
+        # Set log scale, labels etc.
+        ax.set_yscale("log")
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Frequency (Hz)")
+        ax.set_title("Amplitude of wavelet transform")
+
+        # Show the plot.
+        plt.show()
+
     Parameters
     ----------
     axes
@@ -135,6 +176,24 @@ def _subsample2d(arr: ndarray, width: int) -> ndarray:
 def colormap() -> "LinearSegmentedColormap":
     """
     Loads the colormap used by PyMODA.
+
+    .. highlight:: python
+    .. code-block:: python
+
+        \"""
+        Example usage of 'colormap()'.
+
+        Assume that the data from a wavelet transform has already been calculated. 
+        \"""
+        import pymodalib
+        from matplotlib import pyplot as plt
+
+        cmap = pymodalib.colormap()
+
+        # Pass the colormap to a matplotlib function using the 'cmap' keyword argument.
+        # Note that this is matplotlib's 'contourf', not PyMODAlib's 'contourf'.
+        plt.contourf(mesh1, mesh2, amp_wt, cmap=cmap)
+
 
     Returns
     -------
