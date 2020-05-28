@@ -119,3 +119,25 @@ def deprecated(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+class ExperimentalWarning(UserWarning):
+    """
+    Warning shown when a function is experimental.
+    """
+
+
+def experimental(func):
+    """
+    Decorator which marks a function as experimental.
+    """
+
+    def wrapper(*args, **kwargs):
+        warnings.warn(
+            f"The '{func.__name__}' function is experimental. It may produce "
+            f"inaccurate results, and its function signature may change in future.",
+            ExperimentalWarning,
+        )
+        return func(*args, **kwargs)
+
+    return wrapper

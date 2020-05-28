@@ -15,6 +15,7 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 # Import functions to make them easily accessible.
+from pymodalib.algorithms.bayesian import bayesian_inference
 from pymodalib.algorithms.group_coherence import group_coherence, dual_group_coherence
 from pymodalib.algorithms.harmonics import harmonicfinder
 from pymodalib.algorithms.ridge_extraction import ridge_extraction, ecurve, rectfr
@@ -45,6 +46,7 @@ __imported = (
     rectfr,
     colormap,
     contourf,
+    bayesian_inference,
 )
 
 # Useful aliases for functions.
