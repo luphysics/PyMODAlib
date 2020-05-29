@@ -27,7 +27,7 @@ from pymodalib.plotting import colormap, contourf
 from pymodalib.utils.cache import cachedarray, cleanup
 
 # PyMODAlib version.
-__version__ = "0.10.2b1"
+__version__ = "0.11.0b1"
 
 # This tuple isn't important; it just ensures that PyCharm doesn't try to remove unnecessary imports.
 __imported = (
