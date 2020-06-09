@@ -20,7 +20,6 @@ from numpy import ndarray
 from pymodalib.utils.decorators import experimental
 
 
-@experimental
 def bayesian_inference(
     signal1: ndarray,
     signal2: ndarray,

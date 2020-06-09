@@ -18,11 +18,11 @@ from typing import Any, Iterable
 
 from numpy import ndarray
 
-from pymodalib.utils.decorators import experimental
+from pymodalib.utils.decorators import experimental, matlabwrapper
 from pymodalib.utils.matlab import multi_matlab_to_numpy, matlab_to_numpy
 
 
-@experimental
+@matlabwrapper(module="full_bayesian")
 def bayesian_inference_impl(
     signal1: ndarray,
     signal2: ndarray,
