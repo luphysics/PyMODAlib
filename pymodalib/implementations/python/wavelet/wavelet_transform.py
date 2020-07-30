@@ -309,7 +309,8 @@ def wavelet_transform(
     else:
         n1 = np.floor((NL - L) * coib1[0] / (coib1[0] + coib2[0]))
         n2 = np.ceil((NL - L) * coib1[0] / (coib1[0] + coib2[0]))
-
+    n1 = int(n1)
+    n2 = int(n2)
     if padding == "predictive":
         pow = (-(L / fs - np.arange(1, L + 1) / fs)) / (wp.t2h - wp.t1h)
         w = 2 ** pow
@@ -498,6 +499,8 @@ def wavelet_transform(
             "cut_edges": cut_edges,
             "fs": fs,
             "padding": padding,
+            "n1": n1,
+            "n2": n2,
             "rel_tolerance": rel_tolerance,
         }
         return WT, freq, opt
