@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Tuple, Union, Dict
+from typing import Tuple, Union, Dict, List
 
 import numpy as np
 from numpy import ndarray
@@ -59,7 +59,15 @@ def ecurve_impl(
         }
     )
 
-    tfsupp = package.ecurve(tfr, frequencies, wopt, kwargs, nargout=1)
+    wopt_sanitised: Dict = {**wopt}
+    twf: List = (wopt.get("wp") or {}).get("twf")
+
+    if twf and isinstance(twf, list):
+        # Avoid passing this field containing Numpy arrays to the MATLAB algorithm.
+        # It doesn't use this field anyway.
+        twf.clear()
+
+    tfsupp = package.ecurve(tfr, frequencies, wopt_sanitised, kwargs, nargout=1)
     return tfsupp
 
 
