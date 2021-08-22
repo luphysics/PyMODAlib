@@ -88,9 +88,7 @@ def rectfr_impl(
     if isinstance(tfsupp, ndarray):
         tfsupp = matlab.double(tfsupp.tolist())
 
-    args = [
-        method,
-    ]
+    args = [method]
 
     if isinstance(tfr, ndarray):
         tfr_real = matlab.double(np.real(tfr).tolist())
@@ -104,6 +102,12 @@ def rectfr_impl(
 
     wopt = wopt or {}
     wopt["fs"] = float(fs)
+
+    twf: List = (wopt.get("wp") or {}).get("twf")
+    if twf and isinstance(twf, list):
+        # Avoid passing this field containing Numpy arrays to the MATLAB algorithm.
+        # It doesn't use this field anyway.
+        twf.clear()
 
     iamp, iphi, ifreq = package.rectfr(tfsupp, tfr, frequencies, wopt, *args, nargout=3)
     return iamp, iphi, ifreq

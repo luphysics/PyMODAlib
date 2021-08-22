@@ -114,7 +114,12 @@ def ridge_extraction(
     )
 
     iamp, iphi, ifreq = rectfr(
-        tfsupp, tfr, frequencies, fs=fs, wopt=wopt, method=method,
+        tfsupp,
+        tfr,
+        frequencies,
+        fs=fs,
+        wopt=wopt,
+        method=method,
     )
 
     iamp = reorient(iamp)
@@ -294,7 +299,12 @@ def rectfr(
     """
 
     iamp, iphi, ifreq = rectfr_impl(
-        tfsupp, tfr, frequencies, fs=fs, method=method, wopt=wopt,
+        tfsupp,
+        tfr,
+        frequencies,
+        fs,
+        wopt,
+        method,
     )
 
     return multi_matlab_to_numpy(iamp, iphi, ifreq)

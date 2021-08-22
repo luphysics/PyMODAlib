@@ -280,7 +280,14 @@ def group_coherence_impl(
                 if i != coh_index and j != coh_index:
                     surrogates[i, j, :] = np.NaN
 
-        surr_percentile = np.nanpercentile(surrogates, percentile, axis=(0, 1,))
+        surr_percentile = np.nanpercentile(
+            surrogates,
+            percentile,
+            axis=(
+                0,
+                1,
+            ),
+        )
         surr_percentile[np.isnan(surr_percentile)] = 0
 
         residual_coherence[coh_index] -= surr_percentile

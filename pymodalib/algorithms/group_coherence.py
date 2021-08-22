@@ -192,6 +192,11 @@ def statistical_test(
         else:
             w, p = np.NaN, np.NaN
 
-        results.append((w, p,))
+        results.append(
+            (
+                w,
+                p,
+            )
+        )
 
     return [p for (w, p) in results]

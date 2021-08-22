@@ -39,7 +39,17 @@ wt_power = np.abs(wt) ** 2
 avg_wt_power = np.nanmean(wt_power, axis=1)
 mesh1, mesh2 = np.meshgrid(times, freq)
 
-fig, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={"width_ratios": [3, 1,]}, sharey=True)
+fig, (ax1, ax2) = plt.subplots(
+    1,
+    2,
+    gridspec_kw={
+        "width_ratios": [
+            3,
+            1,
+        ]
+    },
+    sharey=True,
+)
 
 pymodalib.contourf(ax1, mesh1, mesh2, wt_power)
 ax1.set_title(f"WT power ({impl} implementation)")

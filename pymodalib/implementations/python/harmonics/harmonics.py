@@ -65,7 +65,13 @@ def harmonicfinder_impl_python(
     m, n = output1.shape
     detsig = signal
 
-    ressur = np.empty((surr_count, m, m,))
+    ressur = np.empty(
+        (
+            surr_count,
+            m,
+            m,
+        )
+    )
     ressur.fill(np.NaN)
 
     scheduler = Scheduler(shared_memory=False)
@@ -104,7 +110,14 @@ def harmonicfinder_impl_python(
             if not hasattr(_res_a1_a2, "__len__"):
                 _res_a1_a2 = np.asarray((_res_a1_a2,))
 
-            isurr = np.argsort(np.concatenate((_res_a1_a2, ressur[:, a1, a2 - 1],)))
+            isurr = np.argsort(
+                np.concatenate(
+                    (
+                        _res_a1_a2,
+                        ressur[:, a1, a2 - 1],
+                    )
+                )
+            )
             sig[isurr] = np.arange(0, surr_count + 1)
 
             pos[a1, a2 - 1] = sig[0]
@@ -112,8 +125,18 @@ def harmonicfinder_impl_python(
 
     pos1 = pos.copy()
 
-    surrmean = np.empty((m, m,))
-    surrstd = np.empty((m, m,))
+    surrmean = np.empty(
+        (
+            m,
+            m,
+        )
+    )
+    surrstd = np.empty(
+        (
+            m,
+            m,
+        )
+    )
 
     for a1 in range(m):
         for a2 in range(m):
@@ -124,7 +147,13 @@ def harmonicfinder_impl_python(
 
     pos2 = pos
 
-    if crop and not np.all(np.isnan(res), axis=(0, 1,)):
+    if crop and not np.all(
+        np.isnan(res),
+        axis=(
+            0,
+            1,
+        ),
+    ):
         # Crop out rows which are completely NaN.
         mask1 = ~np.all(np.isnan(res), axis=0)  # Columns which only contain NaN values.
         res = res[mask1][:, mask1]
@@ -160,7 +189,12 @@ def harmonicfinder_impl_python(
 def _calculate_harmonics(output1, m, n, surr_count: int, parallel=True) -> ndarray:
     print(f"Calculating harmonics (running in parallel)...")
 
-    res = np.empty((m, m,))
+    res = np.empty(
+        (
+            m,
+            m,
+        )
+    )
     res.fill(np.NaN)
 
     from multiprocessing import Pool, cpu_count
@@ -210,7 +244,12 @@ def _calculate_surrogate(
 ) -> ndarray:
     print(f"Calculating surrogate {sigb + 1} (running in parallel)...")
 
-    ressur = np.empty((m, m,))
+    ressur = np.empty(
+        (
+            m,
+            m,
+        )
+    )
     ressur.fill(np.NaN)
 
     # This is important. When running in parallel, the random state is identical for all processes;
@@ -275,7 +314,13 @@ def modbasicwavelet_flow_cmplx4(
 
     first_not_nan = False
 
-    while np.all(np.isnan(REZ), axis=(0, 1,)):
+    while np.all(
+        np.isnan(REZ),
+        axis=(
+            0,
+            1,
+        ),
+    ):
         for z in range(len(m)):
             s = scale_min * sigma ** m[z]
 
@@ -379,7 +424,13 @@ def modbasicwavelet_flow_cmplx4(
                 cols = int(np.floor(margin / (fs * time_res)))
                 nan = np.empty((cols,))
                 nan.fill(np.NaN)
-                trans = np.concatenate((nan, rez, nan,))
+                trans = np.concatenate(
+                    (
+                        nan,
+                        rez,
+                        nan,
+                    )
+                )
             else:
                 trans = rez.copy()
 
@@ -428,7 +479,13 @@ def modbasicwavelet_flow_cmplx4(
         )
         first_not_nan = True
 
-    if np.all(np.isnan(REZ), axis=(0, 1,)):
+    if np.all(
+        np.isnan(REZ),
+        axis=(
+            0,
+            1,
+        ),
+    ):
         warnings.warn(
             f"Result contains only NaN values. Please try with different parameters.",
             RuntimeWarning,
@@ -455,7 +512,12 @@ def indexfinder3(data1, data2) -> Tuple[ndarray, ndarray]:
     pslow[i1] = np.floor(bins * dummy1 / len(data1))
     pfast[i2] = np.floor(bins * dummy2 / len(data2))
 
-    binner = np.zeros((bins, bins,))
+    binner = np.zeros(
+        (
+            bins,
+            bins,
+        )
+    )
 
     for n in range(len(pslow)):
         binner[pslow[n], pfast[n]] = binner[pslow[n], pfast[n]] + 1

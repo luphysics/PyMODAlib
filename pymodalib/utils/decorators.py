@@ -25,6 +25,8 @@ from pymodalib.utils.matlab_runtime import (
 )
 
 # Python 3.7 is the highest supported version for MATLAB-packaged libraries.
+from utils import macos
+
 max_python_version = (3, 7)
 
 msg_no_runtime = (
@@ -38,7 +40,7 @@ msg_no_runtime = (
 )
 
 
-def matlabwrapper(module):
+def matlabwrapper(module: str):
     """
     Decorator which marks a MATLAB wrapper: a function which calls a function from a MATLAB-packaged library.
 
@@ -101,7 +103,12 @@ def matlabwrapper(module):
                 elif status is not RuntimeStatus.EXISTS:
                     raise Exception("Unknown RuntimeStatus for MATLAB Runtime.")
 
-            return func(*args, **kwargs)
+            if macos.should_use_process():
+                result = macos.run_in_process(func, *args, **kwargs)
+            else:
+                result = func(*args, **kwargs)
+
+            return result
 
         return wrapper
 

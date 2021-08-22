@@ -337,7 +337,10 @@ def wavelet_transform(
             ),
         ]
 
-        if parallel and sys.version_info > (3, 8,):
+        if parallel and sys.version_info > (
+            3,
+            8,
+        ):
             import multiprocessing as mp
 
             pool = mp.Pool()
@@ -387,7 +390,10 @@ def wavelet_transform(
 
     WT = np.empty((SN, L), dtype=np.complex64)
 
-    if parallel and sys.version_info >= (3, 8,):
+    if parallel and sys.version_info >= (
+        3,
+        8,
+    ):
         import multiprocessing as mp
         from multiprocessing.shared_memory import SharedMemory
 
@@ -404,7 +410,13 @@ def wavelet_transform(
 
         # Choose the range of indices which each process will calculate.
         indices = np.array_split(np.arange(0, SN), num_processes)
-        ranges = [(i[0], i[-1] + 1,) for i in indices]
+        ranges = [
+            (
+                i[0],
+                i[-1] + 1,
+            )
+            for i in indices
+        ]
 
         # Define arguments to pass to processes.
         for start, end in ranges:
@@ -1912,7 +1924,13 @@ def fcast(
             pb = nb
             nf = np.min([pf + df, fs / 2 - FTol])
 
-            FM1 = np.ones((L, 1,), dtype=np.float64)
+            FM1 = np.ones(
+                (
+                    L,
+                    1,
+                ),
+                dtype=np.float64,
+            )
             FM2 = np.cos(2 * np.pi * nf * t.reshape(t.size, 1))
             FM3 = np.sin(2 * np.pi * nf * t.reshape(t.size, 1))
             FM = hstack([FM1, FM2, FM3])
@@ -1943,7 +1961,13 @@ def fcast(
             cb = np.vstack([zeros(pb.size), pb, nb]).T
             cf[0] = pf - df / rr ** 2
 
-            FM1 = np.ones((L, 1,), dtype=np.float64)
+            FM1 = np.ones(
+                (
+                    L,
+                    1,
+                ),
+                dtype=np.float64,
+            )
             FM2 = np.cos(2 * np.pi * cf[0] * t.reshape(t.size, 1))
             FM3 = np.sin(2 * np.pi * cf[0] * t.reshape(t.size, 1))
             FM = hstack([FM1, FM2, FM3])
@@ -1957,7 +1981,13 @@ def fcast(
         while cf[1] - cf[0] > FTol and cf[2] - cf[1] > FTol:
             tf = cf[0] + cf[2] - cf[1]
 
-            FM1 = np.ones((L, 1,), dtype=np.float64)
+            FM1 = np.ones(
+                (
+                    L,
+                    1,
+                ),
+                dtype=np.float64,
+            )
             FM2 = np.cos(2 * np.pi * tf * t.reshape(t.size, 1))
             FM3 = np.sin(2 * np.pi * tf * t.reshape(t.size, 1))
             FM = hstack([FM1, FM2, FM3])
@@ -2055,7 +2085,13 @@ def fcast(
             cb = np.vstack([nb, pb, zeros(len(pb))]).T
             cf[2] = pf + df / rr ** 2
 
-            FM1 = np.ones((L, 1,), dtype=np.float64)
+            FM1 = np.ones(
+                (
+                    L,
+                    1,
+                ),
+                dtype=np.float64,
+            )
             FM2 = np.cos(2 * np.pi * cf[0] * t.reshape(t.size, 1))
             FM3 = np.sin(2 * np.pi * cf[0] * t.reshape(t.size, 1))
             FM = hstack([FM1, FM2, FM3])
@@ -2127,7 +2163,13 @@ def fcast(
         amp[0] += cb[0]
         v[itn - 1] = cerr
 
-        FM1 = np.ones((L, 1,), dtype=np.float64)
+        FM1 = np.ones(
+            (
+                L,
+                1,
+            ),
+            dtype=np.float64,
+        )
         FM2 = np.cos(2 * np.pi * cf * t.reshape(t.size, 1))
         FM3 = np.sin(2 * np.pi * cf * t.reshape(t.size, 1))
         FM = hstack([FM1, FM2, FM3])

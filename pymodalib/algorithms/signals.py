@@ -109,7 +109,10 @@ def preprocess(
     return preprocess_impl(signal, fs, fmin, fmax)
 
 
-def generate_times(signal: ndarray, fs: float,) -> ndarray:
+def generate_times(
+    signal: ndarray,
+    fs: float,
+) -> ndarray:
     """
     Generates the time values associated with a signal, starting from t=0.
 

@@ -13,7 +13,8 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
-from typing import List, Union, Dict, Any
+from collections import abc
+from typing import List, Union, Dict, Any, Tuple
 
 import numpy as np
 from numpy import ndarray
@@ -70,7 +71,9 @@ def __dict_convert(data: Dict) -> Dict:
         elif is_matlab_array(value):
             data[key] = matlab_to_numpy(value)
 
-        elif isinstance(value, list) and all([is_matlab_array(i) for i in value]):
+        elif isinstance(value, abc.Iterable) and all(
+            [is_matlab_array(i) for i in value]
+        ):
             data[key] = [matlab_to_numpy(i) for i in value]
 
     return data
@@ -96,7 +99,7 @@ def __array_convert(data: "mlarray") -> ndarray:
     return result
 
 
-def multi_matlab_to_numpy(*args) -> List[ndarray]:
+def multi_matlab_to_numpy(*args) -> Tuple[Any, ...]:
     """
     Converts multiple matlab arrays to numpy arrays using `matlab_to_numpy()`.
 
@@ -115,7 +118,25 @@ def multi_matlab_to_numpy(*args) -> List[ndarray]:
         Ordered list containing the Numpy equivalent of each MATLAB array.
     """
     out = []
+
     for arr in args:
         out.append(matlab_to_numpy(arr))
 
-    return out
+    return (*out,)
+
+
+def multi_nested_matlab_to_numpy(*args) -> Tuple[Any]:
+    return (*[nested_matlab_to_numpy(a) for a in args],)
+
+
+def nested_matlab_to_numpy(item) -> Any:
+    if is_matlab_array(item):
+        converted = __array_convert(item)
+    elif isinstance(item, Dict):
+        converted = __dict_convert(item)
+    elif not isinstance(item, ndarray) and isinstance(item, abc.Iterable):
+        converted = nested_matlab_to_numpy(*item)
+    else:
+        converted = item
+
+    return converted

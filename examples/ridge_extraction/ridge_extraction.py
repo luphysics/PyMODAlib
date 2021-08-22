@@ -38,7 +38,12 @@ if __name__ == "__main__":
 
     # Note: your IDE may incorrectly display an error on this statement.
     wt, freq, wopt = pymodalib.wavelet_transform(
-        signal, fs, fmin=fmin, fmax=fmax, return_opt=True, implementation="matlab",
+        signal,
+        fs,
+        fmin=fmin,
+        fmax=fmax,
+        return_opt=True,
+        implementation="matlab",
     )
 
     iamp, iphi, ifreq = pymodalib.ridge_extraction(wt, freq, fs, wopt=wopt)
