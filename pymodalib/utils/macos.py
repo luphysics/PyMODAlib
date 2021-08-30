@@ -46,12 +46,18 @@ def configure_dyld_library_path(path: str = None, from_env=False) -> None:
 
 
 def run_in_process(func: Callable, *args, **kwargs) -> Any:
+    # Not sure why this import is required, but otherwise it's always None.
+    from pymodalib.utils.macos import _dyld_library_path as dyld_lib_path
+
     from scheduler.Scheduler import Scheduler
 
     scheduler = Scheduler()
 
     def _func(*args, **kwargs):
-        configure_dyld_library_path(from_env=True)
+        # Not sure why this import is required, but otherwise it's always None.
+        from pymodalib.utils.macos import _dyld_library_path as dyld_lib_path
+
+        os.environ[_dyld_key] = dyld_lib_path
         result = func(*args, **kwargs)
 
         if not isinstance(result, tuple):

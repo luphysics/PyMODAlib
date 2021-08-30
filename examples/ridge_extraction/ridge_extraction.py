@@ -25,6 +25,15 @@ import pymodalib
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
+from pymodalib.utils import macos
+
+macos.configure_dyld_library_path(
+    "/Applications/MATLAB/MATLAB_Runtime/v96/runtime/maci64:"
+    "/Applications/MATLAB/MATLAB_Runtime/v96/sys/os/maci64:"
+    "/Applications/MATLAB/MATLAB_Runtime/v96/bin/maci64:"
+    "/Applications/MATLAB/MATLAB_Runtime/v96/extern/bin/maci64"
+)
+
 if __name__ == "__main__":
     signal = np.load("../1signal_10Hz.npy")
 
