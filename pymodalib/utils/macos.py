@@ -51,6 +51,7 @@ def run_in_process(func: Callable, *args, **kwargs) -> Any:
     scheduler = Scheduler()
 
     def _func(*args, **kwargs):
+        configure_dyld_library_path(from_env=True)
         result = func(*args, **kwargs)
 
         if not isinstance(result, tuple):
