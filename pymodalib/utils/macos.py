@@ -20,7 +20,7 @@ from typing import Any, Callable
 
 import multiprocess
 
-from utils.matlab import multi_nested_matlab_to_numpy
+from pymodalib.utils.matlab import multi_nested_matlab_to_numpy
 
 _dyld_library_path: str = None
 _dyld_key = "DYLD_LIBRARY_PATH"

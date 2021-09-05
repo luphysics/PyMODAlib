@@ -25,7 +25,7 @@ from pymodalib.utils.matlab_runtime import (
 )
 
 # Python 3.7 is the highest supported version for MATLAB-packaged libraries.
-from utils import macos
+from pymodalib.utils import macos
 
 max_python_version = (3, 7)
 
