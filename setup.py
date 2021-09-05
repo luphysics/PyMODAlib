@@ -25,7 +25,7 @@ here = path.abspath(path.dirname(__file__))
 os.chdir(here)
 
 with open("pymodalib/__init__.py") as f:
-    regexp = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+([ab])[0-9]+")
+    regexp = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+[ab][0-9]+")
     version = regexp.findall(f.read())[0]
 
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
